@@ -137,7 +137,7 @@ class RouteServiceImplTest {
     void getAll_returnsAllRoutes() {
         Route r1 = buildRoute(1L, "Colombo - Kandy", "CKE-001", true);
         Route r2 = buildRoute(2L, "Colombo - Galle", "CGE-001", true);
-        when(repository.findAll()).thenReturn(List.of(r1, r2));
+        when(repository.findAllWithStops()).thenReturn(List.of(r1, r2));
 
         List<RouteDto> results = service.getAll();
 
@@ -149,7 +149,7 @@ class RouteServiceImplTest {
     @Test
     @DisplayName("getAll: returns empty list when no routes")
     void getAll_noRoutes_returnsEmpty() {
-        when(repository.findAll()).thenReturn(List.of());
+        when(repository.findAllWithStops()).thenReturn(List.of());
 
         assertThat(service.getAll()).isEmpty();
     }

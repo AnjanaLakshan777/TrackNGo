@@ -44,6 +44,45 @@
       <artifactId>spring-boot-starter-websocket</artifactId>
     </dependency>
 
+    <!--
+      Caching. Reference data (routes, buses, emergency numbers) is read on every
+      app launch and changes rarely, so it is served from an in-process Caffeine
+      cache instead of the database. See app/config/CacheConfig.java for the
+      cache names and TTLs, and the @CacheEvict annotations on the admin write
+      paths that keep them correct.
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
+
+    <!--
+      Actuator. Without it there is no way to see per-endpoint latency, startup
+      cost or connection-pool health, which makes every performance change a
+      guess. SecurityConfig keeps everything except /actuator/health behind
+      authentication.
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <!--
+      Development-only: restarts the application context on recompile instead of
+      requiring a full JVM boot across all 15 modules. <optional>true</optional>
+      keeps it out of the production fat jar, and Spring Boot disables it
+      automatically when the app is started from a packaged jar.
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-devtools</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- Database Driver -->
     <dependency>
       <groupId>com.mysql</groupId>
@@ -162,6 +201,24 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
           <mainClass>com.trackngo.app.TrackNGoApplication</mainClass>
+          <!--
+            Layered jar. Without this the runtime image ships one ~60MB jar as a
+            single Docker layer, so every deploy pushes and pulls all of it even
+            when only application code changed. Layers split rarely-changing
+            dependencies from frequently-changing application classes, which the
+            Dockerfile extracts into separate COPY layers. It also shortens cold
+            start, because the JVM reads already-extracted class files instead of
+            unpacking a nested jar on every boot.
+          -->
+          <layers>
+            <enabled>true</enabled>
+          </layers>
+          <!--
+            Excluded from the packaged jar so a production image never carries the
+            devtools restart classloader. Spring Boot disables devtools in a
+            packaged jar anyway; this keeps it out of the artifact entirely.
+          -->
+          <excludeDevtools>true</excludeDevtools>
         </configuration>
         <executions>
           <execution>

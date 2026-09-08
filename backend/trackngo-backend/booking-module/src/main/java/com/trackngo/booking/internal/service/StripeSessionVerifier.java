@@ -50,9 +50,24 @@ public class StripeSessionVerifier {
 
         Session session;
         try {
+            /*
+              Explicit timeouts, because the caller (BookingFlowService.settleReservation)
+              runs this inside its transaction - so for as long as Stripe takes to
+              answer, this request is holding a pooled database connection and the
+              booking's row locks. The Stripe SDK's defaults are 30s to connect and
+              80s to read, which on a fifteen-connection pool means a slow Stripe can
+              stall settlement for everyone. Ten seconds is well beyond a healthy
+              round trip and far below the point where it takes the pool down;
+              exceeding it raises StripeException, which the catch below already
+              turns into "please try again" with the reservation left intact.
+            */
             session = Session.retrieve(
                     sessionId,
-                    RequestOptions.builder().setApiKey(secretKey).build());
+                    RequestOptions.builder()
+                            .setApiKey(secretKey)
+                            .setConnectTimeout(5_000)
+                            .setReadTimeout(10_000)
+                            .build());
         } catch (StripeException ex) {
             log.warn("[Stripe] Could not retrieve session '{}' while settling '{}': {}",
                     sessionId, expectedOrderId, ex.getMessage());

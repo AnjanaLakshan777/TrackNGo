@@ -655,6 +655,28 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
             </View>
           </View>
 
+          {/*
+            Emergency contacts are reachable from the SOS screen, but a driver
+            only opens that in an emergency - which is the worst moment to
+            discover the list is empty. Surfacing it in the profile alongside the
+            passenger app's equivalent section gives them somewhere to set it up
+            calmly, beforehand.
+          */}
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>{t('settings.safety')}</Text>
+            <TouchableOpacity
+              style={styles.rowButton}
+              onPress={() => router.push('/emergency-contacts')}
+            >
+              <MaterialCommunityIcons name="card-account-phone" size={20} color="#2F6BFF" />
+              <View style={styles.settingContent}>
+                <Text style={styles.settingLabel}>{t('settings.emergencyContacts')}</Text>
+                <Text style={styles.settingValue}>{t('settings.emergencyContactsHint')}</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>{t('settings.preferences')}</Text>
             <TouchableOpacity

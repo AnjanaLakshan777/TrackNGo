@@ -1,6 +1,34 @@
 server:
   # Render assigns its own port via $PORT; local dev falls back to 8080.
+  # AWS deployments set PORT the same way (see aws/README.md).
   port: ${PORT:8080}
+
+  # Every response body is gzipped before it leaves the server. The clients are
+  # mobile apps on Sri Lankan mobile networks, and route geometry, booking lists
+  # and conversation history are all JSON that compresses by roughly 70-80% —
+  # the cheapest latency win available on a slow connection. Responses under
+  # min-response-size are left alone, because compressing them costs more CPU
+  # than the bytes it saves.
+  # Deliberately NOT text/html or application/javascript. Those are the content
+  # types SockJS uses for its htmlfile and xhr_streaming fallback transports, and
+  # a streaming response that gets gzipped is buffered rather than delivered in
+  # chunks - which stalls the SockJS handshake and leaves the STOMP client with no
+  # underlying connection. The apps only ever consume JSON from this backend, so
+  # the list below keeps the whole benefit without touching the chat transport.
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/plain,text/css
+    min-response-size: 1024
+
+  tomcat:
+    threads:
+      # Sized for a 1 vCPU / 1GB container (Render free tier, AWS t3.micro).
+      # Tomcat's default of 200 request threads reserves stack memory this
+      # instance does not have, in order to serve concurrency the 15-connection
+      # database pool could never use anyway. Raise TOMCAT_MAX_THREADS along with
+      # the instance size; nothing else needs to change.
+      max: ${TOMCAT_MAX_THREADS:60}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS:10}
 
 spring:
   main:
@@ -11,6 +39,69 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      # On HikariCP's defaults (10 connections, a 30-minute max lifetime, no
+      # keepalive) a managed MySQL closes an idle connection before the pool
+      # does. The next request that borrows that dead connection waits out a TCP
+      # timeout before retrying, which is exactly the "first request after a
+      # quiet period is slow, then it's fine" symptom.
+      #
+      # max-lifetime MUST stay below the database server's wait_timeout — check
+      # it with SHOW VARIABLES LIKE 'wait_timeout'. 570s is safe against the
+      # common 600s default; if your server uses a shorter one, lower
+      # DB_POOL_MAX_LIFETIME_MS to match rather than editing this file.
+      maximum-pool-size: ${DB_POOL_MAX:15}
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:20000}
+      idle-timeout: 300000
+      max-lifetime: ${DB_POOL_MAX_LIFETIME_MS:570000}
+      # Probes idle connections so a dead one is discovered and replaced by the
+      # pool's own housekeeper rather than by a user's request.
+      keepalive-time: 150000
+      pool-name: trackngo-pool
+  data:
+    jpa:
+      repositories:
+        # Left at Spring's own default deliberately.
+        #
+        # Setting this to "deferred" builds the repository proxies on a
+        # background thread during startup, which across 15 modules shaves a
+        # slice off boot time. It only pays off on a cold start, though, and this
+        # application has several @PostConstruct initialisers and ApplicationRunners
+        # that run before the deferred bootstrap completes - a combination that
+        # needs to be watched booting against a real database before being
+        # trusted, not assumed.
+        #
+        # Try it with JPA_REPOSITORY_BOOTSTRAP_MODE=deferred once you can watch
+        # the startup logs. Nothing else depends on the choice.
+        bootstrap-mode: ${JPA_REPOSITORY_BOOTSTRAP_MODE:default}
+  task:
+    execution:
+      pool:
+        # Backs plain @Async work: notification/SMS/email dispatch and the live
+        # GPS location write. The queue is deliberately left unbounded (Spring's
+        # default) so a burst is queued rather than rejected — a dropped
+        # notification would be a correctness bug, a slightly delayed one is not.
+        core-size: ${ASYNC_CORE_SIZE:4}
+        max-size: ${ASYNC_MAX_SIZE:8}
+      thread-name-prefix: trackngo-async-
+      shutdown:
+        # Let in-flight async work finish on shutdown, so a redeploy cannot lose
+        # a notification that had already been handed off.
+        await-termination: true
+        await-termination-period: 20s
+    scheduling:
+      pool:
+        # Five @Scheduled methods share this pool. On Spring's default of a
+        # single thread they serialise, so a slow nightly corporate billing run
+        # holds up refund processing and booking completion behind it. They
+        # already run at different times, so separate threads change when they
+        # *can* overlap, not what any of them does.
+        size: ${SCHEDULER_POOL_SIZE:4}
+      thread-name-prefix: trackngo-sched-
+      shutdown:
+        await-termination: true
+        await-termination-period: 20s
   servlet:
     multipart:
       max-file-size: 15MB
@@ -25,7 +116,29 @@ spring:
       ddl-auto: ${JPA_DDL_AUTO:validate}
     properties:
       hibernate:
-        format_sql: true
+        # Only affects how SQL is laid out when SQL logging is switched on. Off
+        # by default so turning on show-sql to debug a query does not also pay
+        # for pretty-printing every statement.
+        format_sql: ${HIBERNATE_FORMAT_SQL:false}
+        jdbc:
+          # Sends multi-row writes (a seat booking inserts several rows) as one
+          # round trip instead of one per row. MySQL only actually combines the
+          # statements when the JDBC URL carries rewriteBatchedStatements=true —
+          # see .env.example. Without that flag these settings are simply inert,
+          # never incorrect.
+          batch_size: 30
+          # Bounds how many rows the driver pulls at once, so a large report
+          # query cannot balloon the heap on a 1GB instance.
+          fetch_size: 100
+        order_inserts: true
+        order_updates: true
+        batch_versioned_data: true
+        query:
+          # Pads IN (?, ?, ?) lists up to the next power of two so that queries
+          # differing only in collection size share one prepared statement,
+          # which lifts the statement cache hit rate instead of compiling a new
+          # plan for every distinct list length.
+          in_clause_parameter_padding: true
     open-in-view: false
   ai:
     openai:
@@ -49,6 +162,42 @@ trackngo:
   # deployed Vercel domain(s) (comma-separate if you add a preview domain).
   cors:
     allowed-origins: ${FRONTEND_URL:http://localhost:5173,http://127.0.0.1:5173}
+
+  # ---------------------------------------------------------------------------
+  # Performance tuning knobs
+  #
+  # Every value below has a safe default and can be overridden by environment
+  # variable, so behaviour can be dialled back on a deployed instance without a
+  # rebuild. See BACKEND_PERFORMANCE_GUIDE.md for what each one trades off.
+  # ---------------------------------------------------------------------------
+  cache:
+    # How long reference data (routes and their stops) may be served from memory
+    # before it is re-read from the database. Admin writes evict this cache
+    # immediately, so the TTL is only a backstop against a change made outside
+    # the application. Set to 0 to disable caching entirely.
+    reference-ttl-seconds: ${CACHE_REFERENCE_TTL_SECONDS:300}
+    # How long an authenticated request's user lookup may be reused. This cache
+    # is read only by JwtFilter, never by the login path, so a password change
+    # still takes effect immediately. Role changes, status changes and deletions
+    # all evict it, so what the TTL backstops is a change made straight in the
+    # database. Set to 0 to read from the database on every request, as before.
+    user-details-ttl-seconds: ${CACHE_USER_DETAILS_TTL_SECONDS:60}
+  tracking:
+    # Minimum gap between database writes of the same bus's position. Live
+    # tracking serves passengers from memory and is unaffected by this; the only
+    # reader of the persisted row is the AI assistant answering "where is this
+    # bus", which does not need two-second freshness. Set to 0 to write every
+    # accepted fix, as before.
+    location-write-min-interval-ms: ${TRACKING_LOCATION_WRITE_INTERVAL_MS:15000}
+  refunds:
+    # The refund poller checks for work on this interval while refunds are
+    # actually flowing. When it finds nothing it backs off (see
+    # idle-backoff-multiplier) rather than continuing to hammer the database.
+    poll-ms: ${REFUND_POLL_MS:1000}
+    # After this many consecutive empty polls, only every Nth tick runs the
+    # query. Responsiveness is restored the moment a refund appears.
+    idle-after-empty-polls: ${REFUND_IDLE_AFTER_EMPTY_POLLS:5}
+    idle-backoff-multiplier: ${REFUND_IDLE_BACKOFF_MULTIPLIER:15}
 
 # Blank-safe: an unset Twilio credential disables SMS sending (falls back to
 # logging the code) rather than crashing the whole app on boot — matching the
@@ -105,3 +254,35 @@ ai:
     direct-http-enabled: ${AI_MODEL_DIRECT_HTTP_ENABLED:true}
   fallback:
     model: ${AI_FALLBACK_MODEL:${GEMINI_FALLBACK_MODEL:gemini-1.5-flash}}
+
+# ---------------------------------------------------------------------------
+# Observability
+#
+# Without these there is no way to see per-endpoint latency, startup cost or
+# connection-pool health, which makes every performance change a guess. Only
+# /actuator/health is public (load balancers and Render/AWS health checks need
+# it unauthenticated); everything else requires an authenticated caller — see
+# SecurityConfig.
+#
+# Useful once running:
+#   /actuator/metrics/http.server.requests          per-endpoint latency
+#   /actuator/metrics/hikaricp.connections.pending  >0 means pool starvation
+#   /actuator/metrics/application.started.time      startup cost
+#   /actuator/metrics/cache.gets                    cache hit/miss counts
+# ---------------------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${ACTUATOR_ENDPOINTS:health,info,metrics}
+  endpoint:
+    health:
+      show-details: when-authorized
+      # Exposes /actuator/health/liveness and /readiness, which is what an AWS
+      # target group or ECS health check should point at so traffic is only sent
+      # once the context is genuinely ready.
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: trackngo-backend

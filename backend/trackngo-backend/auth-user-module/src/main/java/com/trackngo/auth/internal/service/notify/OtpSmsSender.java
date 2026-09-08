@@ -6,6 +6,7 @@ import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,6 +45,7 @@ public class OtpSmsSender {
                 && (hasText(messagingServiceSid) || hasText(fromNumber));
     }
 
+    @Async
     public void sendOtp(String toNumber, String otpCode, int expiryMinutes) {
         String message = "Your TrackNGo admin password reset code is " + otpCode
                 + ". It expires in " + expiryMinutes + " minutes.";

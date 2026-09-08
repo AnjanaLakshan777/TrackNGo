@@ -83,6 +83,9 @@ export interface Translations {
     chooseLanguage: string;
     privacy: string;
     twoFactorAuth: string;
+    safety: string;
+    emergencyContacts: string;
+    emergencyContactsHint: string;
     supportAndLegal: string;
     helpAndSupport: string;
     helpAndSupportLoading: string;
@@ -335,6 +338,9 @@ export const TRANSLATION_KEYS = [
   "settings.chooseLanguage",
   "settings.privacy",
   "settings.twoFactorAuth",
+  "settings.safety",
+  "settings.emergencyContacts",
+  "settings.emergencyContactsHint",
   "settings.supportAndLegal",
   "settings.helpAndSupport",
   "settings.helpAndSupportLoading",

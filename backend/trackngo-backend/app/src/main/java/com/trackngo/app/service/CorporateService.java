@@ -724,9 +724,14 @@ public class CorporateService {
 
     private void assignBuses(long contractId, List<ContractBusDto> buses) {
         String sql = "INSERT INTO corporate_contract_bus (contract_id, bus_id) VALUES (?, ?)";
-        for (ContractBusDto bus : buses) {
-            jdbcTemplate.update(sql, contractId, bus.busId());
-        }
+
+        // One batched round trip rather than one per bus. Same rows, same order,
+        // still inside the caller's transaction - a contract covering a dozen
+        // buses was paying a dozen separate network round trips to insert them.
+        List<Object[]> rows = buses.stream()
+                .map(bus -> new Object[] { contractId, bus.busId() })
+                .toList();
+        jdbcTemplate.batchUpdate(sql, rows);
         jdbcTemplate.update(
                 "UPDATE corporate_contract SET bus_id = ? WHERE contract_id = ?",
                 buses.get(0).busId(), contractId);

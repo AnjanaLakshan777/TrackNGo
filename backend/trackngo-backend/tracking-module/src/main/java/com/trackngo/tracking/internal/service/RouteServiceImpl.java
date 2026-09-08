@@ -12,14 +12,17 @@ import com.trackngo.tracking.internal.entity.RouteStopId;
 import com.trackngo.tracking.internal.repository.RouteRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /*
   Service implementation for managing bus routes.
@@ -29,6 +32,19 @@ import java.util.regex.Pattern;
 @Service
 @RequiredArgsConstructor
 public class RouteServiceImpl implements RouteService {
+
+    /*
+      Compiled once rather than on every call. String.replaceAll and
+      Pattern.compile inside a method recompile the expression each time, and
+      these run for every route in a create or update - pure waste for patterns
+      that never change.
+    */
+    private static final Pattern LEADING_NUMBER = Pattern.compile("([\\d.]+)");
+    private static final Pattern HOURS = Pattern.compile("(\\d+)h");
+    private static final Pattern MINUTES = Pattern.compile("(\\d+)m");
+    private static final Pattern RUPEE_PREFIX = Pattern.compile("(?i)^rs\\.?");
+    private static final Pattern NON_NUMERIC = Pattern.compile("[^\\d.]");
+
     private final RouteRepository repository;
     private final EntityManager entityManager;
 
@@ -42,6 +58,10 @@ public class RouteServiceImpl implements RouteService {
       @throws BusinessException if the route code already exists.
     */
     @Override
+    // RouteGeometryService serves the passenger map from an in-memory snapshot of
+    // this table, so every write path here has to drop it. Without this, an admin
+    // edit would not reach passengers until the cache expired on its own.
+    @CacheEvict(value = RouteGeometryService.ROUTE_INDEX_CACHE, allEntries = true)
     @Transactional
     public RouteDto create(RouteDto dto) {
         if (dto.getCode() != null && repository.existsByRouteCode(dto.getCode())) {
@@ -73,7 +93,10 @@ public class RouteServiceImpl implements RouteService {
     @Override
     @Transactional(readOnly = true)
     public List<RouteDto> getAll() {
-        return repository.findAll().stream().map(this::toDto).toList();
+        // findAllWithStops rather than findAll: toDto reads entity.getStops() for
+        // every route, and with a plain findAll each of those first touches is a
+        // separate SELECT against the route_stop table. Same rows, one query.
+        return repository.findAllWithStops().stream().map(this::toDto).toList();
     }
 
     /*
@@ -86,6 +109,10 @@ public class RouteServiceImpl implements RouteService {
       @throws BusinessException if the new route code already exists.
     */
     @Override
+    // RouteGeometryService serves the passenger map from an in-memory snapshot of
+    // this table, so every write path here has to drop it. Without this, an admin
+    // edit would not reach passengers until the cache expired on its own.
+    @CacheEvict(value = RouteGeometryService.ROUTE_INDEX_CACHE, allEntries = true)
     @Transactional
     public RouteDto update(Long id, RouteDto dto) {
         Route entity = repository.findById(id)
@@ -111,6 +138,10 @@ public class RouteServiceImpl implements RouteService {
       @throws ResourceNotFoundException if the route does not exist.
     */
     @Override
+    // RouteGeometryService serves the passenger map from an in-memory snapshot of
+    // this table, so every write path here has to drop it. Without this, an admin
+    // edit would not reach passengers until the cache expired on its own.
+    @CacheEvict(value = RouteGeometryService.ROUTE_INDEX_CACHE, allEntries = true)
     @Transactional
     public void delete(Long id) {
         Route entity = repository.findById(id)
@@ -128,6 +159,10 @@ public class RouteServiceImpl implements RouteService {
       @return The updated RouteDto.
     */
     @Override
+    // RouteGeometryService serves the passenger map from an in-memory snapshot of
+    // this table, so every write path here has to drop it. Without this, an admin
+    // edit would not reach passengers until the cache expired on its own.
+    @CacheEvict(value = RouteGeometryService.ROUTE_INDEX_CACHE, allEntries = true)
     @Transactional
     public RouteDto toggleStatus(Long id) {
         Route entity = repository.findById(id)
@@ -200,12 +235,20 @@ public class RouteServiceImpl implements RouteService {
         dto.setBaseFare(formatFare(entity.getFee()));
         dto.setStatus(Boolean.TRUE.equals(entity.getIsActive()) ? "Active" : "Inactive");
 
-        List<String> stopNames = new ArrayList<>();
-        if (entity.getStops() != null) {
-            for (RouteStop stop : entity.getStops()) {
-                stopNames.add(stop.getName());
-            }
-        }
+        /*
+          Sorted by priority rather than trusting the order the stops happen to
+          arrive in. applyDtoToEntity treats the first name as the route's start
+          and the last as its end, so the order of this list is meaningful, not
+          cosmetic - it must not depend on whether the collection was lazily
+          loaded or fetch-joined.
+        */
+        List<RouteStop> stops = entity.getStops() != null ? entity.getStops() : List.of();
+        List<String> stopNames = stops.stream()
+                .sorted(Comparator.comparing(
+                        (RouteStop stop) -> stop.getId() == null ? null : stop.getId().getPriority(),
+                        Comparator.nullsLast(Comparator.<Integer>naturalOrder())))
+                .map(RouteStop::getName)
+                .collect(Collectors.toCollection(ArrayList::new));
         dto.setStops(stopNames);
 
         return dto;
@@ -218,7 +261,7 @@ public class RouteServiceImpl implements RouteService {
     */
     private BigDecimal parseDistance(String distance) {
         if (distance == null || distance.isBlank()) return BigDecimal.ZERO;
-        Matcher m = Pattern.compile("([\\d.]+)").matcher(distance);
+        Matcher m = LEADING_NUMBER.matcher(distance);
         return m.find() ? new BigDecimal(m.group(1)) : BigDecimal.ZERO;
     }
 
@@ -230,9 +273,9 @@ public class RouteServiceImpl implements RouteService {
     private Integer parseDuration(String duration) {
         if (duration == null || duration.isBlank()) return 0;
         int total = 0;
-        Matcher hm = Pattern.compile("(\\d+)h").matcher(duration);
+        Matcher hm = HOURS.matcher(duration);
         if (hm.find()) total += Integer.parseInt(hm.group(1)) * 60;
-        Matcher mm = Pattern.compile("(\\d+)m").matcher(duration);
+        Matcher mm = MINUTES.matcher(duration);
         if (mm.find()) total += Integer.parseInt(mm.group(1));
         return total;
     }
@@ -245,7 +288,7 @@ public class RouteServiceImpl implements RouteService {
     */
     private BigDecimal parseFare(String fare) {
         if (fare == null || fare.isBlank()) return BigDecimal.ZERO;
-        String cleaned = fare.replaceAll("(?i)^rs\\.?", "").replaceAll("[^\\d.]", "");
+        String cleaned = NON_NUMERIC.matcher(RUPEE_PREFIX.matcher(fare).replaceAll("")).replaceAll("");
         return cleaned.isEmpty() ? BigDecimal.ZERO : new BigDecimal(cleaned);
     }
 

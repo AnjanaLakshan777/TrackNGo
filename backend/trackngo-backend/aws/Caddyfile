@@ -1,0 +1,37 @@
+# HTTPS termination and reverse proxy for the TrackNGo backend.
+#
+# Caddy obtains and renews a Let's Encrypt certificate by itself. That needs
+# {$DOMAIN} to be a name that resolves to this instance, and ports 80 and 443
+# open in the security group.
+#
+# No domain of your own? Use nip.io, which resolves any <ip>.nip.io to that IP:
+#   DOMAIN=13-234-56-78.nip.io
+# Let's Encrypt issues real certificates for those names, so the mobile apps get
+# genuine HTTPS without you buying anything.
+
+{$DOMAIN} {
+	# Compression here covers everything Caddy serves. The backend also gzips its
+	# own JSON; whichever compresses first, the client gets a single gzip pass.
+	encode zstd gzip
+
+	reverse_proxy localhost:8080 {
+		# So the app sees the real client address and scheme rather than the proxy's.
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+
+		# Live bus positions and chat run over WebSocket and SockJS. Caddy proxies
+		# the Upgrade handshake without extra configuration, but the default
+		# response header timeout would cut a long-lived stream, so it is disabled
+		# for this upstream.
+		transport http {
+			response_header_timeout 0
+		}
+	}
+
+	log {
+		output file /var/lib/caddy/access.log {
+			roll_size 10MiB
+			roll_keep 3
+		}
+	}
+}

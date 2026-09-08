@@ -39,6 +39,23 @@ export class ChatSocketClient {
       this.isConnected = false;
       this.presenceSubscription = null;
     };
+
+    /*
+      onDisconnect only fires for a graceful STOMP DISCONNECT, where the broker
+      acknowledges the shutdown. A socket that simply drops - the backend
+      restarting, the phone changing network, the OS suspending a backgrounded
+      app - never produces that acknowledgement, so without this handler
+      isConnected stays true while the STOMP connection is already gone. The next
+      subscribe then fails with "There is no underlying STOMP connection".
+
+      The presence subscription is dropped as well, because it belongs to the
+      socket that just died; onConnect re-creates it, along with any queued
+      conversation subscriptions, on the reconnect stompjs performs by itself.
+    */
+    this.client.onWebSocketClose = () => {
+      this.isConnected = false;
+      this.presenceSubscription = null;
+    };
   }
 
   connect(userId?: number) {
@@ -46,7 +63,7 @@ export class ChatSocketClient {
       if (
         this.presenceUserId &&
         this.presenceUserId !== userId &&
-        this.canPublish()
+        this.isLive()
       ) {
         this.publishPresenceFor(this.presenceUserId, false);
       }
@@ -59,7 +76,7 @@ export class ChatSocketClient {
     }
     if (!this.client.active) {
       this.client.activate();
-    } else if (this.isConnected) {
+    } else if (this.isLive()) {
       this.ensurePresenceSubscription();
       this.publishPresence(true);
     }
@@ -85,14 +102,14 @@ export class ChatSocketClient {
   private disconnectNow() {
     if (this.client.active) {
       this.publishPresence(false);
-      this.presenceSubscription?.unsubscribe();
+      this.safeUnsubscribe(this.presenceSubscription);
       this.presenceSubscription = null;
       this.client.deactivate();
     }
   }
 
   publishMessage(payload: ChatMessage) {
-    if (!this.canPublish()) {
+    if (!this.isLive()) {
       return;
     }
     this.client.publish({
@@ -102,7 +119,7 @@ export class ChatSocketClient {
   }
 
   publishTyping(payload: TypingIndicator) {
-    if (!this.canPublish()) {
+    if (!this.isLive()) {
       return;
     }
     this.client.publish({
@@ -113,7 +130,7 @@ export class ChatSocketClient {
 
   subscribePresence(handler: (presence: PresenceUpdate) => void): Unsubscribe {
     this.presenceListeners.add(handler);
-    if (this.isConnected) {
+    if (this.isLive()) {
       this.ensurePresenceSubscription();
     }
 
@@ -164,7 +181,7 @@ export class ChatSocketClient {
       );
     };
 
-    if (this.isConnected) {
+    if (this.isLive()) {
       subscribeNow();
     } else {
       this.pendingSubscriptions.push(subscribeNow);
@@ -172,7 +189,7 @@ export class ChatSocketClient {
 
     return () => {
       closed = true;
-      subscriptions.forEach((sub) => sub.unsubscribe());
+      subscriptions.forEach((sub) => this.safeUnsubscribe(sub));
     };
   }
 
@@ -186,7 +203,7 @@ export class ChatSocketClient {
   }
 
   private ensurePresenceSubscription() {
-    if (this.presenceSubscription || !this.isConnected) {
+    if (this.presenceSubscription || !this.isLive()) {
       return;
     }
 
@@ -206,7 +223,7 @@ export class ChatSocketClient {
   }
 
   private publishPresenceFor(userId: number, online: boolean) {
-    if (!this.canPublish()) {
+    if (!this.isLive()) {
       return;
     }
 
@@ -219,8 +236,25 @@ export class ChatSocketClient {
     });
   }
 
-  private canPublish() {
+  private isLive() {
     return this.isConnected && this.client.connected;
+  }
+
+  /*
+    Unsubscribing sends an UNSUBSCRIBE frame, so it needs a live connection and
+    throws the same "no underlying STOMP connection" error without one. A screen
+    unmounting after the socket already dropped is completely normal - the
+    subscription died with the socket, so there is nothing left to cancel.
+  */
+  private safeUnsubscribe(subscription: { unsubscribe: () => void } | null | undefined) {
+    if (!subscription || !this.isLive()) {
+      return;
+    }
+    try {
+      subscription.unsubscribe();
+    } catch {
+      // The connection dropped between the check above and this call.
+    }
   }
 }
 

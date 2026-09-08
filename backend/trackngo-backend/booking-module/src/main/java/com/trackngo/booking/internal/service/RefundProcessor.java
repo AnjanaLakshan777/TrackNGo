@@ -30,13 +30,44 @@ public class RefundProcessor {
     @Value("${stripe.secret-key:}")
     private String stripeSecretKey;
 
+    /** Consecutive polls that found no pending refund. Drives the idle backoff. */
+    @Value("${trackngo.refunds.idle-after-empty-polls:5}")
+    private int idleAfterEmptyPolls;
+
+    /** Once idle, run the query only every Nth tick instead of every tick. */
+    @Value("${trackngo.refunds.idle-backoff-multiplier:15}")
+    private volatile int idleBackoffMultiplier;
+
+    /*
+      Only ever read and written by the scheduler, and Spring never runs a
+      fixedDelay method concurrently with itself, so these need no locking. They
+      are volatile because successive runs may land on different threads in the
+      scheduling pool.
+    */
+    private volatile int consecutiveEmptyPolls = 0;
+    private volatile int ticksSinceLastQuery = 0;
+
     public RefundProcessor(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
+    /**
+     * Looks for refunds waiting to be sent to Stripe.
+     *
+     * <p>The tick stays fast so that a refund raised by a disruption is picked up
+     * within a second, as before. What changed is what happens when there is
+     * nothing to do, which is almost always: after a few empty polls in a row the
+     * query is only run every Nth tick, so an idle system stops issuing a
+     * three-table join against the database every single second - roughly 86,000
+     * of them a day, essentially all returning nothing. The moment a refund does
+     * appear, the backoff resets and the poller is back to checking every tick.
+     */
     @Scheduled(fixedDelayString = "${trackngo.refunds.poll-ms:1000}")
     public void processPendingStripeRefunds() {
         if (stripeSecretKey == null || stripeSecretKey.isBlank()) {
+            return;
+        }
+        if (!dueForQuery()) {
             return;
         }
 
@@ -58,14 +89,44 @@ public class RefundProcessor {
                 LIMIT 25
                 """);
 
-        if (!rows.isEmpty()) {
-            log.info("Processing {} pending Stripe disruption refund(s)", rows.size());
+        if (rows.isEmpty()) {
+            // Saturating, so a system that is idle for months cannot overflow it.
+            if (consecutiveEmptyPolls < Integer.MAX_VALUE) {
+                consecutiveEmptyPolls++;
+            }
+            return;
         }
+
+        // Work found: drop straight back to checking on every tick.
+        consecutiveEmptyPolls = 0;
+        log.info("Processing {} pending Stripe disruption refund(s)", rows.size());
 
         Stripe.apiKey = stripeSecretKey;
         for (Map<String, Object> row : rows) {
             processOne(row);
         }
+    }
+
+    /*
+      True when this tick should actually query the database.
+
+      While refunds are flowing (fewer than idleAfterEmptyPolls empty results in a
+      row) every tick queries, exactly as before. Once the system has clearly gone
+      quiet, only one tick in idleBackoffMultiplier does - so the worst case for
+      noticing a refund raised during a quiet spell is poll-ms multiplied by the
+      backoff, and the refund itself still reaches Stripe in the same call.
+    */
+    private boolean dueForQuery() {
+        if (consecutiveEmptyPolls < idleAfterEmptyPolls) {
+            ticksSinceLastQuery = 0;
+            return true;
+        }
+        int multiplier = Math.max(1, idleBackoffMultiplier);
+        if (++ticksSinceLastQuery >= multiplier) {
+            ticksSinceLastQuery = 0;
+            return true;
+        }
+        return false;
     }
 
     private void processOne(Map<String, Object> row) {

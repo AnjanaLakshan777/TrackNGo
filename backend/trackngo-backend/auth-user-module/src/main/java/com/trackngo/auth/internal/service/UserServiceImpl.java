@@ -12,7 +12,9 @@ import com.trackngo.auth.internal.entity.User;
 import com.trackngo.auth.internal.repository.UserRepository;
 import com.trackngo.commons.exception.BusinessException;
 import com.trackngo.commons.exception.ResourceNotFoundException;
+import com.trackngo.auth.internal.security.JwtUserDetailsCache;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -309,6 +311,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    // This changes the user's email, which is the very key JwtFilter looks them
+    // up by, so the cached lookup has to go. Cleared wholesale rather than by key
+    // because the old email is gone by the time the write completes, and an
+    // administrator editing a user is rare enough that rebuilding the cache costs
+    // nothing worth measuring.
+    @CacheEvict(cacheNames = JwtUserDetailsCache.CACHE_NAME, allEntries = true)
     public UserDto update(Long id, UserDto dto) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -321,6 +329,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    // Account status does not currently feed into the authorities JwtFilter
+    // reads, but evicting keeps "an admin changed this account" and "the cached
+    // lookup is stale" from ever being two different questions.
+    @CacheEvict(cacheNames = JwtUserDetailsCache.CACHE_NAME, allEntries = true)
     public AdminUserDto updateStatus(Long id, UpdateUserStatusRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -525,6 +537,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    // A deleted user must stop authenticating immediately, not when a cache entry
+    // happens to expire. This is what keeps the cached lookup in JwtFilter exactly
+    // as revoking as the uncached one it replaced.
+    @CacheEvict(cacheNames = JwtUserDetailsCache.CACHE_NAME, allEntries = true)
     public void delete(Long id) {
         userRepository.deleteById(id);
     }
