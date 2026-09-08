@@ -1,0 +1,43 @@
+# systemd unit for Caddy, which terminates HTTPS in front of the backend.
+#
+#   sudo cp caddy.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now caddy
+#
+# Certificates renew automatically; there is no cron job to add.
+
+[Unit]
+Description=Caddy web server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=caddy
+Group=caddy
+
+# DOMAIN is read by the Caddyfile. Kept in its own file so the same unit works
+# whatever hostname you end up using.
+EnvironmentFile=/etc/caddy/caddy.env
+
+ExecStart=/usr/local/bin/caddy run --environ --config /etc/caddy/Caddyfile
+ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --force
+
+Restart=on-failure
+RestartSec=5
+
+# Caddy needs to write certificates and its own state.
+ReadWritePaths=/var/lib/caddy
+Environment=XDG_DATA_HOME=/var/lib/caddy
+Environment=XDG_CONFIG_HOME=/var/lib/caddy
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+# Raised because Caddy holds a socket per connected client, and every passenger
+# watching a live map holds a WebSocket open.
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

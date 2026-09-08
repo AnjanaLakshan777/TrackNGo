@@ -1,0 +1,78 @@
+# systemd unit for the TrackNGo backend on an AWS Free Tier t3.micro.
+#
+# Install with:
+#   sudo cp trackngo.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now trackngo
+#
+# Logs:      sudo journalctl -u trackngo -f
+# Restart:   sudo systemctl restart trackngo
+
+[Unit]
+Description=TrackNGo backend
+# Only ordering, not a hard requirement: the app should still start and retry
+# if the network comes up slightly late.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trackngo
+Group=trackngo
+WorkingDirectory=/opt/trackngo
+
+# ---------------------------------------------------------------------------
+# JVM sizing for 1 GB of RAM.
+#
+#   -Xmx512m            An explicit ceiling rather than a percentage. On a bare
+#                       instance (no container limit) a percentage is measured
+#                       against all 1 GB, which leaves nothing for metaspace,
+#                       thread stacks, the OS and Caddy. 512 MB of heap plus
+#                       ~190 MB metaspace plus JVM overhead fits, with the 2 GB
+#                       swap file absorbing spikes.
+#   -XX:+UseSerialGC    Beats G1 on a single vCPU: G1's concurrent collector
+#                       threads have no spare core to run on, and it carries a
+#                       larger memory footprint.
+#   MaxMetaspaceSize    Caps class metadata, which for 15 Spring modules is
+#                       substantial and otherwise grows unbounded.
+#   headless=true       Required by the AWT/ImageIO thumbnail code.
+#   ExitOnOutOfMemoryError
+#                       Exit so systemd restarts a clean JVM, instead of sitting
+#                       in a GC death spiral that looks like an API which never
+#                       responds.
+#
+# Raise -Xmx first if you move to a larger instance.
+# ---------------------------------------------------------------------------
+# The quotes are required. Without them systemd splits on spaces and treats each
+# flag as a separate assignment, so the JVM would start with no options at all.
+Environment="JAVA_TOOL_OPTIONS=-Xmx512m -Xms256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=192m -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true"
+
+# Read after Environment= above, deliberately: that ordering lets trackngo.env
+# override JAVA_TOOL_OPTIONS if you ever need to retune the heap without editing
+# this unit. Secrets live here too - mode 600, owned by trackngo, never in git.
+EnvironmentFile=/opt/trackngo/trackngo.env
+
+ExecStart=/usr/bin/java -jar /opt/trackngo/app.jar
+
+# Restart on any exit, including the OOM exit above. RestartSec gives the
+# database a moment if the app died because RDS was briefly unreachable.
+Restart=always
+RestartSec=10
+
+# A cold start on one vCPU is not fast; don't let systemd give up early.
+TimeoutStartSec=180
+TimeoutStopSec=30
+
+# Modest hardening. NoNewPrivileges and PrivateTmp cost nothing here.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+# uploads/ lives under WorkingDirectory and must stay writable.
+ReadWritePaths=/opt/trackngo
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trackngo
+
+[Install]
+WantedBy=multi-user.target

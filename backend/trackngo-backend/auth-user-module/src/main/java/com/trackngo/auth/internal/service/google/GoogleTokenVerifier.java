@@ -4,6 +4,7 @@ import com.trackngo.commons.exception.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -25,7 +26,23 @@ public class GoogleTokenVerifier {
     private static final String TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo?id_token=";
 
     private final String expectedClientId;
-    private final RestTemplate restTemplate = new RestTemplate();
+
+    /*
+      Built with explicit timeouts. A bare `new RestTemplate()` uses Spring's
+      default request factory, which has no connect or read timeout at all - so a
+      Google endpoint that accepts the connection and then never answers would
+      block this request thread indefinitely. On a container sized for one vCPU
+      that is how a single slow dependency takes the whole API down: the threads
+      are all parked waiting, and nothing else can be served.
+    */
+    private final RestTemplate restTemplate = timeoutBoundedRestTemplate();
+
+    private static RestTemplate timeoutBoundedRestTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5_000);
+        factory.setReadTimeout(10_000);
+        return new RestTemplate(factory);
+    }
 
     public GoogleTokenVerifier(@Value("${google.client-id:}") String expectedClientId) {
         this.expectedClientId = expectedClientId;

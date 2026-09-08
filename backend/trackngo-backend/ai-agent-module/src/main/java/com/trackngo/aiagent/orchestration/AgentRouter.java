@@ -72,6 +72,30 @@ public class AgentRouter {
     /** A bus registration such as NB-0012, which only appears in operational questions. */
     private static final Pattern BUS_MENTION = Pattern.compile("(?i)\\b[a-z]{2}-?\\d{3,4}\\b");
 
+    /*
+      The rest of this class's expressions, compiled once like the two above
+      rather than rebuilt on every call. Parsing one chat message ran a dozen
+      Pattern.compile calls, each of which parses the expression and builds a
+      state machine before matching a single character - work that is identical
+      every time and belongs at class-load, not per request.
+    */
+    private static final Pattern SEAT_NUMBER = Pattern.compile("(?i)\\b\\d{1,2}[A-F]\\b");
+    private static final Pattern SEAT_COUNT =
+            Pattern.compile("\\b(\\d+)\\s+(?:seat|seats|ticket|tickets)\\b");
+    private static final Pattern ONE_SEAT_WORD = Pattern.compile(".*\\b(one|a|an)\\s+(?:seat|ticket)\\b.*");
+    private static final Pattern TWO_SEATS_WORD = Pattern.compile(".*\\btwo\\s+(?:seats|tickets)\\b.*");
+    private static final Pattern THREE_SEATS_WORD = Pattern.compile(".*\\bthree\\s+(?:seats|tickets)\\b.*");
+    private static final Pattern FOUR_SEATS_WORD = Pattern.compile(".*\\bfour\\s+(?:seats|tickets)\\b.*");
+    private static final Pattern SELECTED_BUS_ID =
+            Pattern.compile("(?i)\\bbus\\s*(?:id)?\\s*#?\\s*(\\d+)\\b");
+    private static final Pattern BUS_NUMBER_REFERENCE = Pattern.compile("(?i)\\b[A-Z]{1,3}-\\d{3,5}\\b");
+    private static final Pattern NUMERIC_BUS_REFERENCE = Pattern.compile("(?i)\\bbus\\s+(\\d+)\\b");
+    private static final Pattern ROUTE_REQUEST = Pattern.compile(
+            "(?i)\\bfrom\\s+(.+?)\\s+to\\s+(.+?)"
+                    + "(?:\\s+(?:on\\s+)?(today|tomorrow|\\d{4}-\\d{2}-\\d{2}|morning|afternoon|evening|night)\\b|$)");
+    private static final Pattern ISO_DATE = Pattern.compile("\\b\\d{4}-\\d{2}-\\d{2}\\b");
+    private static final Pattern BOOKING_REFERENCE = Pattern.compile("(?i)\\bBK-[A-Z0-9-]+\\b");
+
     private final ChatClient primaryChatClient;
     private final String fallbackModelName;
     private final String primaryModelName;
@@ -537,7 +561,7 @@ public class AgentRouter {
     }
 
     private List<String> parseSeatNumbers(String query) {
-        Matcher matcher = Pattern.compile("(?i)\\b\\d{1,2}[A-F]\\b").matcher(query == null ? "" : query);
+        Matcher matcher = SEAT_NUMBER.matcher(query == null ? "" : query);
         java.util.ArrayList<String> seats = new java.util.ArrayList<>();
         while (matcher.find()) {
             String seat = matcher.group().toUpperCase(Locale.ROOT);
@@ -550,19 +574,19 @@ public class AgentRouter {
 
     private Integer parseSeatCount(String query) {
         String lower = query == null ? "" : query.toLowerCase(Locale.ROOT);
-        Matcher matcher = Pattern.compile("\\b(\\d+)\\s+(?:seat|seats|ticket|tickets)\\b").matcher(lower);
+        Matcher matcher = SEAT_COUNT.matcher(lower);
         if (matcher.find()) {
             return Math.max(1, Integer.parseInt(matcher.group(1)));
         }
-        if (lower.matches(".*\\b(one|a|an)\\s+(?:seat|ticket)\\b.*")) return 1;
-        if (lower.matches(".*\\btwo\\s+(?:seats|tickets)\\b.*")) return 2;
-        if (lower.matches(".*\\bthree\\s+(?:seats|tickets)\\b.*")) return 3;
-        if (lower.matches(".*\\bfour\\s+(?:seats|tickets)\\b.*")) return 4;
+        if (ONE_SEAT_WORD.matcher(lower).matches()) return 1;
+        if (TWO_SEATS_WORD.matcher(lower).matches()) return 2;
+        if (THREE_SEATS_WORD.matcher(lower).matches()) return 3;
+        if (FOUR_SEATS_WORD.matcher(lower).matches()) return 4;
         return null;
     }
 
     private Optional<Long> parseSelectedBusId(String query) {
-        Matcher matcher = Pattern.compile("(?i)\\bbus\\s*(?:id)?\\s*#?\\s*(\\d+)\\b").matcher(query == null ? "" : query);
+        Matcher matcher = SELECTED_BUS_ID.matcher(query == null ? "" : query);
         if (matcher.find()) {
             return Optional.of(Long.parseLong(matcher.group(1)));
         }
@@ -773,11 +797,11 @@ public class AgentRouter {
 
 
     private Optional<String> parseBusReference(String userQuery) {
-        Matcher busNumber = Pattern.compile("(?i)\\b[A-Z]{1,3}-\\d{3,5}\\b").matcher(userQuery);
+        Matcher busNumber = BUS_NUMBER_REFERENCE.matcher(userQuery);
         if (busNumber.find()) {
             return Optional.of(busNumber.group().toUpperCase());
         }
-        Matcher numericBus = Pattern.compile("(?i)\\bbus\\s+(\\d+)\\b").matcher(userQuery);
+        Matcher numericBus = NUMERIC_BUS_REFERENCE.matcher(userQuery);
         if (numericBus.find()) {
             return Optional.of("bus " + numericBus.group(1));
         }
@@ -1360,8 +1384,7 @@ public class AgentRouter {
 
     private Optional<TripPlanningAgent.RouteRequest> parseRouteRequest(String userQuery) {
         String query = userQuery == null ? "" : userQuery.trim();
-        Pattern pattern = Pattern.compile("(?i)\\bfrom\\s+(.+?)\\s+to\\s+(.+?)(?:\\s+(?:on\\s+)?(today|tomorrow|\\d{4}-\\d{2}-\\d{2}|morning|afternoon|evening|night)\\b|$)");
-        Matcher matcher = pattern.matcher(query);
+        Matcher matcher = ROUTE_REQUEST.matcher(query);
         if (!matcher.find()) {
             return Optional.empty();
         }
@@ -1376,7 +1399,7 @@ public class AgentRouter {
         } else if (lower.contains("today")) {
             date = "today";
         } else {
-            Matcher dateMatcher = Pattern.compile("\\b\\d{4}-\\d{2}-\\d{2}\\b").matcher(query);
+            Matcher dateMatcher = ISO_DATE.matcher(query);
             if (dateMatcher.find()) {
                 date = dateMatcher.group();
             }
@@ -1499,7 +1522,7 @@ public class AgentRouter {
     }
 
     private Optional<String> parseBookingReference(String userQuery) {
-        Matcher matcher = Pattern.compile("(?i)\\bBK-[A-Z0-9-]+\\b").matcher(userQuery == null ? "" : userQuery);
+        Matcher matcher = BOOKING_REFERENCE.matcher(userQuery == null ? "" : userQuery);
         if (matcher.find()) {
             return Optional.of(matcher.group().toUpperCase());
         }

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,7 +28,17 @@ public class AndroidSmsGatewayService implements SmsProvider {
         this.gatewayUrl = gatewayUrl;
         this.apiKey = apiKey;
         this.defaultCountryCode = defaultCountryCode;
-        this.restTemplate = new RestTemplate();
+
+        /*
+          Explicit timeouts. A bare `new RestTemplate()` has neither a connect nor
+          a read timeout, so an SMS gateway that accepts the connection and then
+          stops responding would hold this request thread forever. SMS is sent from
+          the SOS path, which is exactly the moment the API must stay responsive.
+        */
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5_000);
+        factory.setReadTimeout(10_000);
+        this.restTemplate = new RestTemplate(factory);
     }
 
     @Override

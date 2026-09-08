@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,6 +33,7 @@ public class OtpEmailSender {
         return hasText(mailHost);
     }
 
+    @Async
     public void sendOtp(String toEmail, String otpCode, int expiryMinutes) {
         send(toEmail, "TrackNGo password reset code",
                 "Your TrackNGo admin password reset code is: " + otpCode + "\n\n"
@@ -40,6 +42,7 @@ public class OtpEmailSender {
                 "Password reset OTP", otpCode, expiryMinutes);
     }
 
+    @Async
     public void sendLoginOtp(String toEmail, String otpCode, int expiryMinutes) {
         send(toEmail, "Your TrackNGo login verification code",
                 "Your TrackNGo login verification code is: " + otpCode + "\n\n"
@@ -48,6 +51,7 @@ public class OtpEmailSender {
                 "Login OTP", otpCode, expiryMinutes);
     }
 
+    @Async
     public void sendRegistrationOtp(String toEmail, String otpCode, int expiryMinutes) {
         send(toEmail, "Verify your email for TrackNGo",
                 "Your TrackNGo verification code is: " + otpCode + "\n\n"

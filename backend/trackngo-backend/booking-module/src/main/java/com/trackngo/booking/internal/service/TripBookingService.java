@@ -58,31 +58,85 @@ public class TripBookingService {
     private final NotificationDispatcher notifications;
     private final TripPricingService tripPricingService;
 
+    /*
+      Listing every booking, in one query rather than 1 + 2N.
+
+      Each mapped row used to be handed to enrich(), which ran a bus lookup and a
+      payment lookup of its own - so listing five hundred bookings meant roughly a
+      thousand round trips to the database, every one of them over the network.
+
+      The same two pieces of information are joined here instead. The bus joins
+      directly. The payment is the newest row per booking, picked with a window
+      function, which selects exactly what "ORDER BY payment_id DESC LIMIT 1" was
+      selecting one booking at a time. Bookings with no bus and bookings with no
+      payment still come back, with those fields left null, because both joins are
+      outer - matching enrich(), which skipped the bus lookup when bus_id was null
+      and left the payment fields untouched when a booking had never been paid.
+
+      bus_number, bus_brand, payment_status and transaction_id are @Transient on
+      the entity and are not columns of trip_booking, so tb.* cannot collide with
+      them.
+    */
+    private static final String ALL_BOOKINGS_SQL = """
+            SELECT tb.*,
+                   b.bus_number,
+                   b.bus_brand,
+                   p.payment_status,
+                   p.transaction_id
+            FROM trip_booking tb
+            LEFT JOIN bus b ON b.bus_id = tb.bus_id
+            LEFT JOIN (
+                SELECT trip_booking_id,
+                       payment_status,
+                       transaction_id,
+                       ROW_NUMBER() OVER (PARTITION BY trip_booking_id
+                                          ORDER BY payment_id DESC) AS rn
+                FROM payment
+            ) p ON p.trip_booking_id = tb.trip_booking_id AND p.rn = 1
+            ORDER BY tb.trip_booking_id DESC
+            """;
+
     public List<TripBooking> getAllBookings() {
-        String sql = "SELECT * FROM trip_booking ORDER BY trip_booking_id DESC";
-        return jdbc.query(sql, (rs, rowNum) -> {
-            TripBooking b = new TripBooking();
-            b.setId(rs.getLong("trip_booking_id"));
-            b.setStartLocation(rs.getString("start_location"));
-            b.setDestination(rs.getString("destination"));
-            java.sql.Date startDate = rs.getDate("start_date");
-            if (startDate != null) b.setStartDate(startDate.toLocalDate());
-            java.sql.Date returnDate = rs.getDate("return_date");
-            if (returnDate != null) b.setReturnDate(returnDate.toLocalDate());
-            b.setPassengerCount(rs.getInt("passenger_count"));
-            b.setAdvancePayment(rs.getBigDecimal("advance_payment"));
-            b.setFinalPrice(rs.getBigDecimal("final_price"));
-            b.setEstimatedPrice(rs.getBigDecimal("estimated_price"));
-            b.setDiscountAmount(rs.getBigDecimal("discount_amount"));
-            b.setAdminNote(rs.getString("admin_note"));
-            java.sql.Timestamp negotiatedAt = rs.getTimestamp("negotiated_at");
-            if (negotiatedAt != null) b.setNegotiatedAt(negotiatedAt.toLocalDateTime());
-            b.setBookingStatus(rs.getString("booking_status"));
-            b.setPassengerId(rs.getLong("passenger_id"));
-            b.setDriverId((Long) rs.getObject("driver_id"));
-            b.setBusId((Long) rs.getObject("bus_id"));
-            return enrich(b);
+        return jdbc.query(ALL_BOOKINGS_SQL, (rs, rowNum) -> {
+            TripBooking b = mapBookingRow(rs);
+
+            // The same defaults enrich() applied, minus the queries it made.
+            if (b.getEstimatedPrice() == null) b.setEstimatedPrice(b.getFinalPrice());
+            if (b.getDiscountAmount() == null) b.setDiscountAmount(BigDecimal.ZERO.setScale(2));
+            if (b.getBusId() != null) {
+                b.setBusNumber(rs.getString("bus_number"));
+                b.setBusBrand(rs.getString("bus_brand"));
+            }
+            b.setPaymentStatus(rs.getString("payment_status"));
+            b.setTransactionId(rs.getString("transaction_id"));
+            return b;
         });
+    }
+
+    /** Maps the trip_booking columns of a row. Shared so the joined listing and any
+     *  single-row read agree on exactly which fields a booking carries. */
+    private TripBooking mapBookingRow(java.sql.ResultSet rs) throws java.sql.SQLException {
+        TripBooking b = new TripBooking();
+        b.setId(rs.getLong("trip_booking_id"));
+        b.setStartLocation(rs.getString("start_location"));
+        b.setDestination(rs.getString("destination"));
+        java.sql.Date startDate = rs.getDate("start_date");
+        if (startDate != null) b.setStartDate(startDate.toLocalDate());
+        java.sql.Date returnDate = rs.getDate("return_date");
+        if (returnDate != null) b.setReturnDate(returnDate.toLocalDate());
+        b.setPassengerCount(rs.getInt("passenger_count"));
+        b.setAdvancePayment(rs.getBigDecimal("advance_payment"));
+        b.setFinalPrice(rs.getBigDecimal("final_price"));
+        b.setEstimatedPrice(rs.getBigDecimal("estimated_price"));
+        b.setDiscountAmount(rs.getBigDecimal("discount_amount"));
+        b.setAdminNote(rs.getString("admin_note"));
+        java.sql.Timestamp negotiatedAt = rs.getTimestamp("negotiated_at");
+        if (negotiatedAt != null) b.setNegotiatedAt(negotiatedAt.toLocalDateTime());
+        b.setBookingStatus(rs.getString("booking_status"));
+        b.setPassengerId(rs.getLong("passenger_id"));
+        b.setDriverId((Long) rs.getObject("driver_id"));
+        b.setBusId((Long) rs.getObject("bus_id"));
+        return b;
     }
 
     @Transactional
@@ -90,11 +144,13 @@ public class TripBookingService {
         validateRequest(request);
         Fare fare = calculateFare(request);
 
-        TripBooking booking = tripBookingRepository.findAll().stream()
-                .filter(tb -> passengerId.equals(tb.getPassengerId())
-                        && "pending".equalsIgnoreCase(tb.getBookingStatus())
-                        && tb.getBusId() == null)
-                .max(java.util.Comparator.comparing(TripBooking::getId))
+        // Reuse the passenger's newest open draft if they have one, otherwise
+        // start a fresh booking. Ordered newest-first by the query, so the first
+        // row is the same one the previous max-by-id scan picked - it just no
+        // longer reads every booking in the system to find it.
+        TripBooking booking = tripBookingRepository.findOpenDraftsByPassenger(passengerId)
+                .stream()
+                .findFirst()
                 .orElseGet(TripBooking::new);
 
         booking.setStartLocation(request.startLocation().trim());
@@ -110,12 +166,11 @@ public class TripBookingService {
         booking.setPassengerId(passengerId);
         TripBooking submitted = enrich(tripBookingRepository.save(booking));
 
-        // Clean up any older orphaned unassigned drafts for this user
-        List<TripBooking> oldDrafts = tripBookingRepository.findAll().stream()
-                .filter(tb -> passengerId.equals(tb.getPassengerId())
-                        && "pending".equalsIgnoreCase(tb.getBookingStatus())
-                        && tb.getBusId() == null
-                        && !tb.getId().equals(submitted.getId()))
+        // Clean up any older orphaned unassigned drafts for this user. Read again
+        // rather than reusing the list above, so a draft created between the two
+        // reads is still cleaned up - same as before, minus the table scan.
+        List<TripBooking> oldDrafts = tripBookingRepository.findOpenDraftsByPassenger(passengerId).stream()
+                .filter(tb -> !tb.getId().equals(submitted.getId()))
                 .toList();
         for (TripBooking old : oldDrafts) {
             old.setBookingStatus("cancelled");

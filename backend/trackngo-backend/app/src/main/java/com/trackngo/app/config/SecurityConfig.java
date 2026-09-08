@@ -41,6 +41,13 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/health").permitAll()
+                // Health probes have to answer before anything has authenticated -
+                // that is what a load balancer or container platform polls to
+                // decide whether to send traffic here at all. Everything else
+                // under /actuator (metrics, environment, cache statistics) falls
+                // through to .anyRequest().authenticated() below, so it is not
+                // public.
+                .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                 // Registration is performed by an anonymous caller.
                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .requestMatchers("/ws/**").permitAll()
