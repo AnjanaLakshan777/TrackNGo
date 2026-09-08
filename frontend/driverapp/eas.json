@@ -16,7 +16,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://trackngo-backend-uyhf.onrender.com"
+        "EXPO_PUBLIC_API_BASE_URL": "https://3-110-117-172.nip.io"
       }
     },
     "production": {
@@ -26,7 +26,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://trackngo-backend-uyhf.onrender.com"
+        "EXPO_PUBLIC_API_BASE_URL": "https://3-110-117-172.nip.io"
       }
     }
   }
