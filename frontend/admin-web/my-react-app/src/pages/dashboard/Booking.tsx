@@ -145,7 +145,7 @@ function Booking() {
   const [bookings, setBookings] = useState<BookingRecord[]>([])
   const [tripRequests, setTripRequests] = useState<BookingRecord[]>([])
   const [activeTab, setActiveTab] = useState<BookingCategory>('All Bookings')
-  const [filtersVisible, setFiltersVisible] = useState(true)
+  const [filtersVisible, setFiltersVisible] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'All Statuses' | BookingStatus>('All Statuses')
   const [routeFilter, setRouteFilter] = useState('All Routes')
