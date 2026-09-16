@@ -129,7 +129,6 @@ export default function AssistantScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       id: "welcome",
@@ -173,16 +172,6 @@ export default function AssistantScreen() {
   const keyboardOffset =
     Platform.OS === "ios" ? TAB_BAR_CONTENT_HEIGHT + insets.bottom : 0;
 
-  /* Removing the old Android padding fixed the doubled-up lift described above,
-     but left nothing in its place, so the composer sat behind the keyboard. The
-     window does shrink on resize, yet not reliably by the full keyboard height on
-     a tab screen, so measure it and lift by the remainder - exactly what
-     ChatRoomScreen does, which is why that screen never had this problem. */
-  const keyboardLift =
-    Platform.OS === "android" && keyboardVisible
-      ? Math.max(0, keyboardHeight - insets.bottom)
-      : 0;
-
   const helperText = useMemo(() => {
     if (!currentUser) {
       return language === "si"
@@ -199,14 +188,12 @@ export default function AssistantScreen() {
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
     const hideEvent =
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-    const showSubscription = Keyboard.addListener(showEvent, (event) => {
+    const showSubscription = Keyboard.addListener(showEvent, () => {
       setKeyboardVisible(true);
-      setKeyboardHeight(event.endCoordinates.height);
       requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
     });
     const hideSubscription = Keyboard.addListener(hideEvent, () => {
       setKeyboardVisible(false);
-      setKeyboardHeight(0);
     });
 
     return () => {
@@ -339,7 +326,7 @@ export default function AssistantScreen() {
         <View
           style={[
             styles.composer,
-            { paddingBottom: 14 + bottomInset + keyboardLift },
+            { paddingBottom: 14 + bottomInset },
           ]}
         >
           <TextInput
