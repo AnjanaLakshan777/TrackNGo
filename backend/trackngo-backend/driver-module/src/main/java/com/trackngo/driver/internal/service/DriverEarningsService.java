@@ -1,5 +1,7 @@
 package com.trackngo.driver.internal.service;
 
+import com.trackngo.commons.constants.AppZone;
+
 import com.trackngo.driver.api.dto.DriverEarningDto;
 import com.trackngo.driver.api.dto.DriverEarningsDayDto;
 import com.trackngo.driver.api.dto.DriverEarningsResponse;
@@ -108,7 +110,7 @@ public class DriverEarningsService {
                 money(rs.getBigDecimal("amount"))
         ), driverId, driverId);
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(AppZone.COLOMBO);
         LocalDate weekStart = today.minusDays(6);
         LocalDate previousWeekStart = today.minusDays(13);
         LocalDate previousWeekEnd = today.minusDays(7);

@@ -1,6 +1,8 @@
 
 package com.trackngo.auth.internal.service;
 
+import com.trackngo.commons.constants.AppZone;
+
 import com.trackngo.auth.api.RegistrationOtpService;
 import com.trackngo.auth.api.UserService;
 import com.trackngo.auth.api.dto.UserDto;
@@ -256,7 +258,7 @@ public class UserServiceImpl implements UserService {
                 licenseNumber,
                 status,
                 Boolean.TRUE.equals(request.isVerified()),
-                request.joinedDate() != null ? request.joinedDate() : LocalDate.now()
+                request.joinedDate() != null ? request.joinedDate() : LocalDate.now(AppZone.COLOMBO)
         );
         return getDriver(driverId);
     }
@@ -303,7 +305,7 @@ public class UserServiceImpl implements UserService {
                 licenseNumber,
                 status,
                 Boolean.TRUE.equals(request.isVerified()),
-                request.joinedDate() != null ? request.joinedDate() : LocalDate.now(),
+                request.joinedDate() != null ? request.joinedDate() : LocalDate.now(AppZone.COLOMBO),
                 clean(request.profilePhoto()),
                 id
         );
@@ -448,14 +450,14 @@ public class UserServiceImpl implements UserService {
                 || !LICENSE_PATTERN.matcher(licenseNumber).matches()) {
             throw new BusinessException("License number must start with B followed by exactly 7 digits.");
         }
-        if (request.licenceExpiry() == null || request.licenceExpiry().isBefore(LocalDate.now())) {
+        if (request.licenceExpiry() == null || request.licenceExpiry().isBefore(LocalDate.now(AppZone.COLOMBO))) {
             throw new BusinessException("License expiry cannot be in the past.");
         }
         Integer experience = request.yearsOfExperience();
         if (experience == null || experience < 0 || experience > 60) {
             throw new BusinessException("Years of experience must be between 0 and 60.");
         }
-        if (request.joinedDate() != null && request.joinedDate().isAfter(LocalDate.now())) {
+        if (request.joinedDate() != null && request.joinedDate().isAfter(LocalDate.now(AppZone.COLOMBO))) {
             throw new BusinessException("Joined date cannot be in the future.");
         }
         String accountNumber = clean(request.accountNumber());

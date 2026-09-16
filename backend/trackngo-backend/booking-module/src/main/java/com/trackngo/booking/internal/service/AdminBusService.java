@@ -1,5 +1,7 @@
 package com.trackngo.booking.internal.service;
 
+import com.trackngo.commons.constants.AppZone;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trackngo.booking.api.dto.AdminBusDtos.*;
@@ -413,7 +415,7 @@ public class AdminBusService {
         } catch (DateTimeParseException e) {
             throw new BusinessException("Insurance expiry date is invalid.");
         }
-        if (!expiry.isAfter(LocalDate.now())) {
+        if (!expiry.isAfter(LocalDate.now(AppZone.COLOMBO))) {
             throw new BusinessException(
                     "Insurance expiry date must be after today - this bus's insurance is expired or expires today.");
         }
@@ -455,7 +457,7 @@ public class AdminBusService {
      */
     public BusRevenueSummary getRevenue(Long busId, int days) {
         int window = Math.min(Math.max(days, 1), 365);
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(AppZone.COLOMBO);
         LocalDate from = today.minusDays(window - 1L);
 
         String sql = """
@@ -510,7 +512,7 @@ public class AdminBusService {
      */
     public List<BusDepartureBookings> getUpcomingBookings(Long busId, int days) {
         int window = Math.min(Math.max(days, 1), 60);
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(AppZone.COLOMBO);
         LocalDate until = today.plusDays(window - 1L);
 
         String sql = """

@@ -1,5 +1,7 @@
 package com.trackngo.app.service;
 
+import com.trackngo.commons.constants.AppZone;
+
 import com.trackngo.app.dto.AdminContractSummaryDto;
 import com.trackngo.app.dto.ContractBusDto;
 import com.trackngo.app.dto.ContractCancellationDto;
@@ -769,11 +771,11 @@ public class CorporateService {
         if (dto.startDate() == null || dto.endDate() == null) {
             throw new IllegalArgumentException("Start and end date are required.");
         }
-        java.time.LocalDate earliestStart = java.time.LocalDate.now().plusWeeks(1);
+        java.time.LocalDate earliestStart = LocalDate.now(AppZone.COLOMBO).plusWeeks(1);
         if (dto.startDate().isBefore(earliestStart)) {
             throw new IllegalArgumentException("Contract start date must be at least one week from today.");
         }
-        java.time.LocalDate latestStart = java.time.LocalDate.now().plusDays(MAX_CONTRACT_START_LEAD_DAYS);
+        java.time.LocalDate latestStart = LocalDate.now(AppZone.COLOMBO).plusDays(MAX_CONTRACT_START_LEAD_DAYS);
         if (dto.startDate().isAfter(latestStart)) {
             throw new IllegalArgumentException(
                     "Contract start date cannot be more than " + MAX_CONTRACT_START_LEAD_DAYS + " days from today.");
@@ -1215,7 +1217,7 @@ public class CorporateService {
                     throw new IllegalArgumentException("cancelTiming must be 'immediate' or 'scheduled'.");
                 }
                 cancelNow = "immediate".equals(normalizedTiming);
-                effectiveDate = cancelNow ? null : LocalDate.now().plusDays(MIN_ADMIN_CANCEL_NOTICE_DAYS);
+                effectiveDate = cancelNow ? null : LocalDate.now(AppZone.COLOMBO).plusDays(MIN_ADMIN_CANCEL_NOTICE_DAYS);
             }
 
             if (cancelNow) {
@@ -1363,7 +1365,7 @@ public class CorporateService {
         // The new term starts the day after the current one ends, unless that's
         // less than a week away — a contract can't be created starting sooner
         // than that, so a late renewal just starts as soon as it legally can.
-        LocalDate earliestAllowedStart = LocalDate.now().plusWeeks(1);
+        LocalDate earliestAllowedStart = LocalDate.now(AppZone.COLOMBO).plusWeeks(1);
         LocalDate newStart = existing.endDate().plusDays(1);
         if (newStart.isBefore(earliestAllowedStart)) {
             newStart = earliestAllowedStart;
@@ -1801,7 +1803,7 @@ public class CorporateService {
         if (predecessorContractId == null) {
             return BigDecimal.ZERO;
         }
-        LocalDate effectiveCutoff = LocalDate.now();
+        LocalDate effectiveCutoff = LocalDate.now(AppZone.COLOMBO);
         if (cutoffDate != null && cutoffDate.isBefore(effectiveCutoff)) {
             effectiveCutoff = cutoffDate;
         }
