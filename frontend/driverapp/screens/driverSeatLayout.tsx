@@ -79,18 +79,68 @@ const toMinutes = (time?: string | null): number | null => {
   return hours * 60 + minutes;
 };
 
+const MINUTES_PER_DAY = 24 * 60;
+
+/** Minutes from `from` forward to `to`, wrapping past midnight. */
+const forwardDistance = (from: number, to: number): number =>
+  (to - from + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+
+/** True when `now` sits inside [start, end], even if that window crosses midnight. */
+const isWithinWindow = (now: number, start: number, end: number): boolean =>
+  forwardDistance(start, now) <= forwardDistance(start, end);
+
 /**
- * A round-trip bus runs its outbound leg (start_time) and return leg
- * (return_start_time) on the same date, same bus, same route. Once the
- * return departure time has passed, the driver is on that leg for the rest
- * of the day, so the allocations screen should switch to its bookings.
+ * A round-trip bus runs an outbound leg (start_time) and a return leg
+ * (return_start_time) on the same bus and route, and the allocations screen
+ * shows whichever one the driver is working.
+ *
+ * This cannot be a simple "is it past the return time" test. An overnight
+ * service departs outbound at 20:30 and returns at 01:30 the next morning,
+ * so its return time is numerically smaller than almost any clock reading,
+ * and that test reported "return" for the whole day.
+ *
+ * Instead: if a leg is currently running, that is the active one. Otherwise
+ * the driver is between legs, so show whichever departs next - measured
+ * around the clock, so midnight is not a special case.
  */
-const resolveActiveLeg = (returnStartTime?: string | null): JourneyLeg => {
-  const returnMinutes = toMinutes(returnStartTime);
-  if (returnMinutes === null) return 'forward';
+const resolveActiveLeg = (
+  startTime?: string | null,
+  endTime?: string | null,
+  returnStartTime?: string | null,
+  returnEndTime?: string | null,
+): JourneyLeg => {
+  const outStart = toMinutes(startTime);
+  const retStart = toMinutes(returnStartTime);
+  if (retStart === null) return 'forward';
+  if (outStart === null) return 'return';
+
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  return nowMinutes >= returnMinutes ? 'return' : 'forward';
+
+  const outEnd = toMinutes(endTime);
+  const retEnd = toMinutes(returnEndTime);
+
+  if (retEnd !== null && isWithinWindow(nowMinutes, retStart, retEnd)) return 'return';
+  if (outEnd !== null && isWithinWindow(nowMinutes, outStart, outEnd)) return 'forward';
+
+  // Between legs: whichever departure comes round first.
+  return forwardDistance(nowMinutes, retStart) < forwardDistance(nowMinutes, outStart)
+    ? 'return'
+    : 'forward';
+};
+
+/**
+ * Schedule times arrive as "HH:mm" or "HH:mm:ss". Printed raw, a driver saw
+ * "20:00:00" where the timetable says 8:00 PM.
+ */
+const formatDepartureTime = (time?: string | null): string | null => {
+  const minutes = toMinutes(time);
+  if (minutes === null) return null;
+  const hours24 = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const suffix = hours24 >= 12 ? 'PM' : 'AM';
+  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+  return hours12 + ':' + String(mins).padStart(2, '0') + ' ' + suffix;
 };
 
 const isBookingOnLeg = (bookingJourneyTime: string | undefined, legDepartureTime?: string | null): boolean => {
@@ -200,7 +250,12 @@ export default function DriverSeatLayoutScreen() { //main component
       // date/bus - getBookedSeats returns both mixed together, so narrow
       // down to whichever leg is currently in service before rendering.
       const hasReturnLeg = !!assignment.returnStartTime;
-      const activeLeg = resolveActiveLeg(assignment.returnStartTime);
+      const activeLeg = resolveActiveLeg(
+        assignment.startTime,
+        assignment.endTime,
+        assignment.returnStartTime,
+        assignment.returnEndTime,
+      );
       const activeDepartureTime = activeLeg === 'return' ? assignment.returnStartTime : assignment.startTime;
       const legBookedSeats = hasReturnLeg
         ? bookedSeats.filter((b) => !b.journeyTime || isBookingOnLeg(b.journeyTime, activeDepartureTime))
@@ -285,7 +340,7 @@ export default function DriverSeatLayoutScreen() { //main component
         endLocation: endLocation,
         busNumber: assignment.busNumber,
         journeyDate: today,
-        journeyTime: activeDepartureTime || '08:00 AM',
+        journeyTime: formatDepartureTime(activeDepartureTime) || '--',
         boardedCount: processedSeats.filter((s: Seat) => s.status === 'boarded').length, // Filter and count boarded seats
         bookedCount: processedSeats.filter(
           (s: Seat) => s.status === 'booked' || s.status === 'boarded'

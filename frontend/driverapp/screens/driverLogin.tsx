@@ -98,7 +98,7 @@ export default function DriverLoginScreen() {   //default finction because we ar
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // Adjust behavior based on platform 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined} // Adjust behavior based on platform 
       style={styles.container}
     >
       <ScrollView  //allow content to be scrollable 
