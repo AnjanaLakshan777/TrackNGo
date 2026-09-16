@@ -72,6 +72,19 @@ interface PassengerDetails {
 
 // Bus schedule times come back as "HH:mm" or "HH:mm:ss" - compare only the
 // HH:mm portion so trailing seconds never break the match.
+/**
+ * Today's date as YYYY-MM-DD in the device's own timezone.
+ *
+ * Not toISOString(), which converts to UTC first: in Sri Lanka (UTC+5:30)
+ * that returns the previous day until 05:30, so the manifest asked the
+ * server for yesterday every early morning.
+ */
+const localDateKey = (date: Date): string => {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+};
+
 const toMinutes = (time?: string | null): number | null => {
   if (!time) return null;
   const [hours, minutes] = time.split(':').map(Number);
@@ -232,8 +245,10 @@ export default function DriverSeatLayoutScreen() { //main component
       
       setSeatRows(seatLayout); //update the state with received backend data
 
-      // Get today's date in YYYY-MM-DD format
-      const today = new Date().toISOString().split('T')[0]; //split means split the date and time into two parts
+      // Today's date in YYYY-MM-DD, in the device's own timezone.
+      // toISOString() converts to UTC first, so in Sri Lanka it returned
+      // YESTERDAY until 05:30 and the manifest asked for the wrong day.
+      const today = localDateKey(new Date());
 
       // Get booked seats for today
       const bookedSeats = await seatBookingService.getBookedSeats(

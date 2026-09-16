@@ -1,5 +1,7 @@
 package com.trackngo.booking.internal.service;
 
+import com.trackngo.commons.constants.AppZone;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.exception.StripeException;
@@ -369,7 +371,7 @@ public class TripBookingService {
         }
 
         LocalDate startDate = toLocalDate(booking.get("start_date"));
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(AppZone.COLOMBO);
         int refundPercentage;
         String refundMessage;
 
@@ -635,11 +637,11 @@ public class TripBookingService {
                 || request.destination() == null || request.destination().isBlank()) {
             throw new IllegalArgumentException("Pickup and destination are required.");
         }
-        LocalDate minStartDate = LocalDate.now().plusDays(2);
+        LocalDate minStartDate = LocalDate.now(AppZone.COLOMBO).plusDays(2);
         if (request.startDate() == null || request.startDate().isBefore(minStartDate)) {
             throw new IllegalArgumentException("Departure date must be at least 2 days from today.");
         }
-        LocalDate maxStartDate = LocalDate.now().plusDays(MAX_DEPARTURE_LEAD_DAYS);
+        LocalDate maxStartDate = LocalDate.now(AppZone.COLOMBO).plusDays(MAX_DEPARTURE_LEAD_DAYS);
         if (request.startDate().isAfter(maxStartDate)) {
             throw new IllegalArgumentException(
                     "Departure date cannot be more than " + MAX_DEPARTURE_LEAD_DAYS + " days from today.");

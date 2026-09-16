@@ -1,5 +1,7 @@
 package com.trackngo.booking.internal.service;
 
+import com.trackngo.commons.constants.AppZone;
+
 import com.trackngo.booking.api.dto.AnalyticsDtos.AnalyticsResponse;
 import com.trackngo.booking.api.dto.AnalyticsDtos.CategorySlice;
 import com.trackngo.booking.api.dto.AnalyticsDtos.DailyPoint;
@@ -62,7 +64,7 @@ public class AdminAnalyticsService {
 
     @Transactional(readOnly = true)
     public AnalyticsResponse getAnalytics(LocalDate from, LocalDate to) {
-        LocalDate resolvedTo = to != null ? to : LocalDate.now();
+        LocalDate resolvedTo = to != null ? to : LocalDate.now(AppZone.COLOMBO);
         LocalDate resolvedFrom = from != null ? from : resolvedTo.minusDays(29);
 
         if (resolvedFrom.isAfter(resolvedTo)) {

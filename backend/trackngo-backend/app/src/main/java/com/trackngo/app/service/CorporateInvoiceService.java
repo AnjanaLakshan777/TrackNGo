@@ -1,5 +1,7 @@
 package com.trackngo.app.service;
 
+import com.trackngo.commons.constants.AppZone;
+
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.trackngo.notification.api.NotificationService;
@@ -48,7 +50,7 @@ public class CorporateInvoiceService {
                 "SELECT billing_amount, start_date, carried_balance, renewed_from_contract_id FROM corporate_contract WHERE contract_id = ?", contractId);
         BigDecimal billingAmount = (BigDecimal) contract.get("billing_amount");
         java.sql.Date startDateSql = (java.sql.Date) contract.get("start_date");
-        LocalDate periodStart = startDateSql != null ? startDateSql.toLocalDate() : LocalDate.now();
+        LocalDate periodStart = startDateSql != null ? startDateSql.toLocalDate() : LocalDate.now(AppZone.COLOMBO);
         LocalDate periodEnd = periodStart.plusMonths(1);
 
         List<Long> busIds = jdbcTemplate.queryForList(
@@ -125,10 +127,10 @@ public class CorporateInvoiceService {
                 java.sql.Date.class, contractId);
         LocalDate periodEnd = (!latestPeriodEnd.isEmpty() && latestPeriodEnd.get(0) != null)
                 ? latestPeriodEnd.get(0).toLocalDate()
-                : LocalDate.now();
+                : LocalDate.now(AppZone.COLOMBO);
 
         int guard = 0;
-        while (periodEnd.isBefore(LocalDate.now()) && guard < 24) {
+        while (periodEnd.isBefore(LocalDate.now(AppZone.COLOMBO)) && guard < 24) {
             LocalDate nextStart = periodEnd;
             LocalDate nextEnd = nextStart.plusMonths(1);
             insertPeriodInvoices(contractId, busIds, billingAmount, nextStart, nextEnd);
@@ -185,7 +187,7 @@ public class CorporateInvoiceService {
                 java.sql.Date dueDateSql = (java.sql.Date) row.get("due_date");
                 LocalDate dueDate = dueDateSql.toLocalDate();
 
-                boolean isToday = dueDate.equals(LocalDate.now());
+                boolean isToday = dueDate.equals(LocalDate.now(AppZone.COLOMBO));
                 String title = isToday ? "Corporate Payment Due Today" : "Corporate Payment Due in 3 Days";
                 String message = isToday
                         ? String.format("Invoice #%d for \"%s\" (Rs. %s) is due today (3rd week of billing cycle). Please complete payment.",

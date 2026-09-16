@@ -270,7 +270,7 @@ function saveRequestFromAdminDriver(driver: AdminDriver): SaveAdminDriverRequest
     status: driver.status,
     isVerified: driver.isVerified,
     isPhoneVerified: driver.isPhoneVerified,
-    joinedDate: driver.joinedDate ?? new Date().toISOString().slice(0, 10),
+    joinedDate: driver.joinedDate ?? todayLocalDate(),
     profilePhoto: driver.profilePhoto,
   };
 }
