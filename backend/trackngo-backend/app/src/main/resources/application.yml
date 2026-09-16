@@ -3,6 +3,19 @@ server:
   # AWS deployments set PORT the same way (see aws/README.md).
   port: ${PORT:8080}
 
+  # Trust X-Forwarded-Proto and X-Forwarded-For from the reverse proxy in front
+  # of the app (Caddy on AWS, Render's router). Without this, Tomcat sees plain
+  # http behind the proxy, so a request that arrived as https://<host> no longer
+  # counts as same-origin with itself. React Native on Android sends
+  # Origin: https://<host> on every WebSocket, and Spring answered those
+  # handshakes with 403: live tracking and chat worked in Expo Go (plain http,
+  # no proxy) but not in the release APKs.
+  #
+  # Only loopback and private-network peers are trusted to set these headers,
+  # so a client reaching port 8080 directly cannot spoof them. Set
+  # FORWARD_HEADERS_STRATEGY=none to go back to ignoring them.
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:native}
+
   # Every response body is gzipped before it leaves the server. The clients are
   # mobile apps on Sri Lankan mobile networks, and route geometry, booking lists
   # and conversation history are all JSON that compresses by roughly 70-80% —

@@ -683,6 +683,7 @@ export default function HomeScreen() {
                             router.push({
                               pathname: "/map/live-map",
                               params: {
+                                bookingRef: booking.id,
                                 busNumber: booking.busNumber,
                                 startLocation: booking.from,
                                 endLocation: booking.to,

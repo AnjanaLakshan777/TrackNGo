@@ -12,7 +12,9 @@ import com.trackngo.auth.internal.repository.RegistrationOtpRepository;
 import com.trackngo.auth.internal.repository.UserRepository;
 import com.trackngo.auth.internal.service.notify.OtpEmailSender;
 import com.trackngo.commons.exception.BusinessException;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,8 +40,36 @@ public class RegistrationOtpServiceImpl implements RegistrationOtpService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final OtpEmailSender otpEmailSender;
+    private final JdbcTemplate jdbcTemplate;
 
     private final SecureRandom secureRandom = new SecureRandom();
+
+    /*
+      registration_otp arrived as database/migrations/V7__registration_otp.sql after
+      trackngo_complete.sql was written, so a database built from that file has no such
+      table and every registration OTP request fails with a 500 - sign-up is impossible.
+      Self-healing here mirrors ensureLoginOtpSchema in AuthServiceImpl, so a fresh
+      deployment works without remembering to run the migration by hand.
+    */
+    @PostConstruct
+    void ensureRegistrationOtpSchema() {
+        jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS registration_otp (
+                    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                    email VARCHAR(254) NOT NULL,
+                    otp_hash VARCHAR(255) NOT NULL,
+                    verification_token VARCHAR(64) NULL,
+                    expires_at TIMESTAMP NOT NULL,
+                    verified_at TIMESTAMP NULL,
+                    consumed BOOLEAN NOT NULL DEFAULT FALSE,
+                    attempts INT NOT NULL DEFAULT 0,
+                    last_sent_at TIMESTAMP NOT NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_registration_otp_email (email, consumed),
+                    INDEX idx_registration_otp_verification_token (verification_token)
+                )
+                """);
+    }
 
     @Override
     @Transactional

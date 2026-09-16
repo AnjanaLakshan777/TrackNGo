@@ -59,10 +59,18 @@ const mockedUseLocalSearchParams = useLocalSearchParams as jest.MockedFunction<
   typeof useLocalSearchParams
 >;
 
+// The screen bounces any journey date outside the booking window straight back to
+// search, so a hard-coded date quietly stops exercising the promotion flow once it
+// falls into the past. Keep it relative to today.
+const FUTURE_DATE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  .toISOString()
+  .slice(0, 10);
+
 describe("BookingSummaryScreen promotion flow", () => {
   const router = {
     back: jest.fn(),
     push: jest.fn(),
+    replace: jest.fn(),
   };
 
   /** Resets mock state and applies a stable booking summary route for each test case. */
@@ -76,7 +84,7 @@ describe("BookingSummaryScreen promotion flow", () => {
         busId: "88",
         busType: "Luxury A/C",
         depart: "08:30",
-        date: "2026-04-25",
+        date: FUTURE_DATE,
         seats: "A1,A2",
         pricePerSeat: "1500",
         busBrand: "Unknown",
@@ -186,7 +194,7 @@ describe("BookingSummaryScreen promotion flow", () => {
           busId: "88",
           busType: "Luxury A/C",
           depart: "08:30",
-          date: "2026-04-25",
+          date: FUTURE_DATE,
           seats: "A1,A2",
           totalPrice: "2700",
           originalAmount: "3200",
@@ -197,6 +205,9 @@ describe("BookingSummaryScreen promotion flow", () => {
           mobile: "+94770000000",
           email: "jane@example.com",
           specialRequest: "",
+          // The screen forwards the route name too (booking-summary.tsx passes
+          // params.routeName ?? ""), which this assertion never listed.
+          routeName: "",
         },
       }),
     );

@@ -163,9 +163,14 @@ public class BookingFlowController {
         return ApiResponse.ok("Cancellation response processed", result);
     }
 
-    @PutMapping("/bookings/{seatBookingId}/boarded")
-    public ApiResponse<Void> markPassengerBoarded(@PathVariable Long seatBookingId) {
-        service.markPassengerBoarded(seatBookingId);
+    /**
+      12. Mark the passenger aboard. Keyed by booking reference like every other
+      booking route here: the app holds the reference rather than seat ids, and one
+      reference can cover several seats.
+     */
+    @PutMapping("/bookings/{bookingRef}/boarded")
+    public ApiResponse<Void> markPassengerBoarded(@PathVariable String bookingRef) {
+        service.markPassengerBoarded(bookingRef);
         return ApiResponse.ok("Passenger marked as boarded", null);
     }
 }

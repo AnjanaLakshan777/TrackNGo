@@ -47,7 +47,7 @@ public class OtpSmsSender {
 
     @Async
     public void sendOtp(String toNumber, String otpCode, int expiryMinutes) {
-        String message = "Your TrackNGo admin password reset code is " + otpCode
+        String message = "Your TrackNGo password reset code is " + otpCode
                 + ". It expires in " + expiryMinutes + " minutes.";
 
         if (!isConfigured()) {

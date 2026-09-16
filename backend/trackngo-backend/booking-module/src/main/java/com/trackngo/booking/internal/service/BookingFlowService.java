@@ -117,6 +117,13 @@ public class BookingFlowService {
             return List.of();
         }
 
+        /* The apps already refuse these dates before searching, but nothing stopped a
+           direct caller from browsing departures outside the window the booking step
+           enforces. A blank date is left alone so an exploratory call still answers. */
+        if (date != null && !date.isBlank()) {
+            validateBookableJourneyDate(date);
+        }
+
         // Find buses on routes that contain both from-stop and to-stop
         // in either direction. Reverse direction is available only when
         // the bus has a configured return_start_time.
@@ -1149,16 +1156,21 @@ public class BookingFlowService {
         return LocalDate.parse(value.toString());
     }
 
-    public void markPassengerBoarded(Long seatBookingId) {
+    /*
+      Marks every seat on the booking as boarded. Keying this on a single seat id
+      would leave the rest of a multi-seat party behind, and the passenger app only
+      ever knows the booking reference.
+    */
+    public void markPassengerBoarded(String bookingRef) {
         int updated = jdbc.update(
-            "UPDATE seat_booking SET status = 'boarded' WHERE seat_booking_id = ? AND status != 'cancelled'",
-            seatBookingId
+            "UPDATE seat_booking SET status = 'boarded' WHERE booking_reference = ? AND status != 'cancelled'",
+            bookingRef
         );
         if (updated == 0) {
-            throw new RuntimeException("Booking not found or already cancelled");
+            throw new BusinessException("That booking could not be found, or it has been cancelled.");
         }
 
-        notifyPassengerBoarded(seatBookingId);
+        notifyPassengerBoarded(bookingRef);
     }
 
     /**
@@ -1254,12 +1266,12 @@ public class BookingFlowService {
     }
 
     /** Confirms boarding once the driver marks the passenger as on board. */
-    private void notifyPassengerBoarded(Long seatBookingId) {
+    private void notifyPassengerBoarded(String bookingRef) {
         Map<String, Object> booking = findBookingRow(
                 "SELECT sb.passenger_id, sb.booking_reference, b.bus_number " +
                 "FROM seat_booking sb JOIN bus b ON sb.bus_id = b.bus_id " +
-                "WHERE sb.seat_booking_id = ?",
-                seatBookingId
+                "WHERE sb.booking_reference = ? LIMIT 1",
+                bookingRef
         );
         if (booking == null) {
             return;

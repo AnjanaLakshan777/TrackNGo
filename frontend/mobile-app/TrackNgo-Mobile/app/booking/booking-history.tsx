@@ -327,6 +327,7 @@ export default function BookingHistoryScreen() {
     router.push({
       pathname: "/map/live-map",
       params: {
+        bookingRef: b.bookingReference,
         busNumber: b.busNumber,
         startLocation: b.startLocation,
         endLocation: b.endLocation,

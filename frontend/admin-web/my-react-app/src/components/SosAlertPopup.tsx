@@ -39,7 +39,7 @@ export function resolveSosAssetUrl(path?: string | null) {
   const trimmed = path?.trim();
   if (!trimmed) return null;
   if (/^(https?:|data:|blob:)/i.test(trimmed)) return trimmed;
-  return new URL(trimmed, SOS_API_BASE).toString();
+  return new URL(trimmed, SOS_API_BASE || window.location.origin).toString();
 }
 
 // Parses a latitude and longitude pair from the alert's shared location string.

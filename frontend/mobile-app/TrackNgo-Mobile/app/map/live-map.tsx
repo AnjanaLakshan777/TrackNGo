@@ -28,6 +28,7 @@ import {
   type LiveBusLocation,
   type RouteStopGeo,
 } from "../../services/trackingApi";
+import { markBoarded } from "../../services/bookingsApi";
 import { createConversation } from "../../services/chatApi";
 import { useSession } from "../../store/sessionStore";
 import {
@@ -650,9 +651,21 @@ export default function LiveMapScreen() {
   };
 
   /* ── Boarding confirmation ──────────────────────────────── */
-  const handleBoardingConfirm = () => {
+  const handleBoardingConfirm = async () => {
     setIsBoarded(true);
     setShowBoardingModal(false);
+
+    /* Record it on the server too. Boarding used to live only in this
+       component's state, so it vanished on restart and neither the driver nor the
+       admin ever saw it. The local flag is set first on purpose: a failed call
+       should not undo what the passenger just told us. */
+    if (params.bookingRef) {
+      try {
+        await markBoarded(params.bookingRef);
+      } catch (err) {
+        console.warn("[LiveMap] Could not record boarding on the server:", err);
+      }
+    }
 
     // Start pulse animation on boarding
     Animated.loop(
