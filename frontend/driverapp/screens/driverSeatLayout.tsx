@@ -107,11 +107,11 @@ export default function DriverSeatLayoutScreen() { //main component
   const { t } = useLanguage(); //get translation function from languagecontext
   const { width } = useWindowDimensions();
   const theme = useMemo(() => ({
-    background: darkMode ? '#111' : '#F1F5F9',
-    card: darkMode ? '#1E1E1E' : '#FFF',
-    text: darkMode ? '#FFF' : '#000',
-    secondaryText: darkMode ? '#AAA' : '#666',
-    border: darkMode ? '#333' : '#E2E8F0',
+    background: darkMode ? '#111827' : '#F1F5F9',
+    card: darkMode ? '#1E1E1E' : '#FFFFFF',
+    text: darkMode ? '#FFFFFF' : '#0F172A',
+    secondaryText: darkMode ? '#94A3B8' : '#64748B',
+    border: darkMode ? '#334155' : '#E2E8F0',
   }), [darkMode]); //until darkmode changes
   const styles = useMemo(() => createStyles(theme, width), [theme, width]); // Create styles using the current theme. 
 
@@ -520,12 +520,20 @@ export default function DriverSeatLayoutScreen() { //main component
       return;
     }
 
+    // The endpoint matches on booking_reference, so without one there is
+    // nothing to send; failing here reads better than a 404 from the server.
+    const bookingReference = bookedData.passenger.bookingReference?.trim();
+    if (!bookingReference) {
+      Alert.alert(t('allocations.error'), t('allocations.failedToMarkBoarded'));
+      return;
+    }
+
     setActionSheetVisible(false);
     try {
       setLoading(true);
       const token = await seatBookingService.getToken(); // Get the JWT token for API authentication. This is necessary to authorize the request to mark the passenger as boarded in the backend.
       const success = await seatBookingService.markPassengerBoarded( // Call the API to mark the passenger as boarded, passing the seat booking ID and the token for authentication. The API will update the status of the booking in the backend, and if successful, we will proceed to update the local state to reflect this change in the UI.
-        bookedData.seatBookingId,
+        bookingReference,
         token
       );
 
@@ -599,7 +607,7 @@ export default function DriverSeatLayoutScreen() { //main component
       <MaterialCommunityIcons
         name={seat.status === 'blocked' ? 'close' : 'account'}
         size={20}
-        color="#FFF"
+        color="#FFFFFF"
       />
       <Text style={styles.seatLabel}>{seat.id}</Text>
     </TouchableOpacity>
@@ -655,7 +663,7 @@ export default function DriverSeatLayoutScreen() { //main component
           <Text style={styles.tripNumber}>{journeyData?.busNumber}</Text>
           <View style={styles.routeContainer}>
             <Text style={styles.routeText}>{journeyData?.startLocation}</Text>
-            <MaterialCommunityIcons name="arrow-right" size={14} color="#999" />
+            <MaterialCommunityIcons name="arrow-right" size={14} color="#94A3B8" />
             <Text style={styles.routeText}>{journeyData?.endLocation}</Text>
           </View>
         </View>
@@ -676,7 +684,7 @@ export default function DriverSeatLayoutScreen() { //main component
               <MaterialCommunityIcons
                 name={journeyData.leg === 'return' ? 'arrow-u-left-top' : 'arrow-right'}
                 size={14}
-                color="#FFF"
+                color="#FFFFFF"
               />
               <Text style={styles.legBadgeText}>
                 {journeyData.leg === 'return' ? t('allocations.returnLeg') : t('allocations.outboundLeg')}
@@ -731,7 +739,7 @@ export default function DriverSeatLayoutScreen() { //main component
           {/* Driver Icon */}
           <View style={styles.driverSection}>
             <View style={styles.driverIcon}>
-              <MaterialCommunityIcons name="steering" size={32} color="#000" />
+              <MaterialCommunityIcons name="steering" size={32} color="#0F172A" />
             </View>
             <Text style={styles.driverLabel}>{t('allocations.driver')}</Text>
           </View>
@@ -813,7 +821,7 @@ export default function DriverSeatLayoutScreen() { //main component
           <View style={styles.locationSection}>
             <View style={styles.locationCard}>
               <View style={styles.locationIconContainer}>
-                <MaterialCommunityIcons name="map-marker" size={20} color="#000" />
+                <MaterialCommunityIcons name="map-marker" size={20} color="#0F172A" />
               </View>
               <View style={styles.locationDetails}>
                 <Text style={styles.locationLabel}>{t('allocations.pickUp')}</Text>
@@ -823,7 +831,7 @@ export default function DriverSeatLayoutScreen() { //main component
 
             <View style={styles.locationCard}>
               <View style={styles.locationIconContainer}>
-                <MaterialCommunityIcons name="map-marker" size={20} color="#000" />
+                <MaterialCommunityIcons name="map-marker" size={20} color="#0F172A" />
               </View>
               <View style={styles.locationDetails}>
                 <Text style={styles.locationLabel}>{t('allocations.dropOff')}</Text>
@@ -988,7 +996,7 @@ function createStyles(theme: any, width: number) {
     backgroundColor: '#7C3AED',
   },
   legBadgeText: {
-    color: '#FFF',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: "700",
   },
@@ -1035,7 +1043,7 @@ function createStyles(theme: any, width: number) {
     borderRadius: 6,
   },
   statusText: {
-    color: '#FFF',
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: "700",
   },
@@ -1137,7 +1145,7 @@ function createStyles(theme: any, width: number) {
   },
   seatLabel: {
     fontSize: 11,
-    color: '#FFF',
+    color: '#FFFFFF',
     fontWeight: "600",
   },
   passengerDetailsSection: {
@@ -1340,7 +1348,7 @@ function createStyles(theme: any, width: number) {
     marginTop: 12,
   },
   retryButtonText: {
-    color: '#FFF',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: "700",
   },

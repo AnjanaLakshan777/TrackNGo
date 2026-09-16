@@ -58,16 +58,6 @@ export default function DriverLoginScreen() {   //default finction because we ar
     const authData = res.data || res; // Adjust based on actual response structure, if the response is just the data object, use res directly, otherwise use res.data
 
     if (authData.userType === "driver") {
-      if (authData.twoFactorRequired) {
-        // Password matched, but this driver has email two-factor authentication
-        // turned on, so a code was just emailed to them. They must verify it
-        // before we issue the real session token.
-        router.push({
-          pathname: "/two-factor-verification",
-          params: { challengeToken: authData.twoFactorToken, email: authData.email },
-        });
-        return;
-      }
 
       const userData = { // Adjust these fields based the actual response structure
         userId: authData.userId,
@@ -141,7 +131,7 @@ export default function DriverLoginScreen() {   //default finction because we ar
               placeholder="Enter your email"
               value={email}
               onChangeText={(text) => { setEmail(text); clearError('email'); }}
-              placeholderTextColor="#999"
+              placeholderTextColor="#94A3B8"
               keyboardType="email-address" // Show email keyboard
               autoCapitalize="none"
               autoCorrect={false}
@@ -164,7 +154,7 @@ export default function DriverLoginScreen() {   //default finction because we ar
               placeholder="Enter password"
               value={password}
               onChangeText={(text) => { setPassword(text); clearError('password'); }}
-              placeholderTextColor="#999"
+              placeholderTextColor="#94A3B8"
               secureTextEntry={!showPassword} // Hide password when showPassword is false
               editable={!isLoading}
             />
@@ -176,7 +166,7 @@ export default function DriverLoginScreen() {   //default finction because we ar
               <MaterialCommunityIcons
                 name={showPassword ? 'eye-off' : 'eye'}
                 size={24}
-                color="#333"
+                color="#334155"
               />
             </TouchableOpacity>
           </View>
@@ -258,14 +248,14 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 28,
     fontWeight: "700",
-    color: '#000',
+    color: '#0F172A',
     textAlign: 'center',
     marginBottom: 5,
   },
   appName: {
     fontSize: 18,
     fontWeight: "500",
-    color: '#999',
+    color: '#94A3B8',
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -275,7 +265,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: "600",
-    color: '#000',
+    color: '#0F172A',
     marginBottom: 10,
     marginTop: 5,
   },
@@ -283,7 +273,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     marginBottom: 20,
@@ -309,7 +299,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 14,
     fontSize: 14,
-    color: '#000',
+    color: '#0F172A',
   },
   eyeIcon: {
     paddingHorizontal: 10,
@@ -340,7 +330,7 @@ const styles = StyleSheet.create({
   },
   rememberText: {
     fontSize: 14,
-    color: '#000',
+    color: '#0F172A',
   },
   forgotPasswordLink: {
     fontSize: 14,
@@ -365,7 +355,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 14,
     fontWeight: "700",
-    color: '#FFF',
+    color: '#FFFFFF',
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -380,7 +370,7 @@ const styles = StyleSheet.create({
   dividerText: {
     marginHorizontal: 12,
     fontSize: 12,
-    color: '#999',
+    color: '#94A3B8',
     fontWeight: "500",
   },
   socialButtonsContainer: {
@@ -396,7 +386,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 10,
@@ -404,6 +394,6 @@ const styles = StyleSheet.create({
   socialButtonText: {
     fontSize: 14,
     fontWeight: "700",
-    color: '#000',
+    color: '#0F172A',
   },
 });

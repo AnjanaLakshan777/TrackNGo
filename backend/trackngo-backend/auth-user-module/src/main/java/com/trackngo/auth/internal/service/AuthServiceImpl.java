@@ -100,28 +100,10 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException("Access denied. " + toDisplayRole(requestedUserType) + " account required.");
         }
 
-        boolean totpEnabled = isTwoFactorEnabled(user.getId());
-        boolean emailOtpEnabled = !totpEnabled && isEmailOtpLoginEnabled(user.getId());
-
-        if ((totpEnabled || emailOtpEnabled)
-                && !trustedDeviceService.isTrusted(user.getId(), request.getTrustedDeviceToken())) {
-            /* Without SMTP the code is only written to the log, so the challenge
-               below would strand the user on a code screen that nothing can ever
-               fill. Say so instead of pretending a code is on its way. */
-            if (emailOtpEnabled && !otpEmailSender.isConfigured()) {
-                throw new BusinessException(
-                        "We cannot send your login verification code right now. Please contact support.");
-            }
-            String challengeToken = jwtUtil.generateToken(
-                    user.getEmail(),
-                    Map.of("purpose", "2fa", "userId", user.getId(), "role", actualUserType, "userType", actualUserType),
-                    5 * 60 * 1000L
-            );
-            if (emailOtpEnabled) {
-                sendLoginOtp(user);
-            }
-            return new AuthResponse(null, user.getId(), user.getUserType(), user.getEmail(), user.getFirstName(), user.getLastName(), true, challengeToken, null);
-        }
+        /* Two-factor authentication has been withdrawn from the apps. No login
+           challenge is issued, so the password is the whole of the check here.
+           Leaving the challenge in place would strand any account that still
+           had the setting switched on: the code screen no longer exists. */
         return authenticatedResponse(user, null);
     }
 

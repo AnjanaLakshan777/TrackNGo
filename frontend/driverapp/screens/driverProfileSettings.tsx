@@ -23,7 +23,7 @@ import { useLanguage } from '@/context/LanguageContext'; //global language/trans
 import { LANGUAGE_CODES, LANGUAGE_NAMES } from '@/locales';
 import { formatDate, isLicenseExpired } from '@/utils/dateFormatter'; // Import utility functions for date formatting and license expiry checking
 import { resolveAssetUrl } from '@/utils/media';
-import { getEmailTwoFactorStatus, setEmailTwoFactorEnabled } from '@/services/twoFactorApi';
+import { ProfileAvatarPlaceholder } from '@/components/ProfileAvatarPlaceholder';
 import { uploadDriverProfilePicture } from '@/services/profileApi';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -87,8 +87,7 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
   const [profileError, setProfileError] = useState<string | null>(null); //state for error handling
 
   const [completionTab, setCompletionTab] = useState('profile'); //state for completion tab
-  const [twoFactor, setTwoFactor] = useState(false);
-  const [isTwoFactorLoading, setIsTwoFactorLoading] = useState(false);
+
   const { darkMode, setDarkMode } = useTheme(); //global theme data
   const { language, setLanguage, t } = useLanguage(); //global language/translation data
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -112,33 +111,6 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
     fetchDriverProfile();
   }, [user?.userId]); // re run everitime user id chnges
 
-  useEffect(() => {
-    if (!user?.userId || !user?.token) return;
-    getEmailTwoFactorStatus(user.userId, user.token)
-      .then((status) => setTwoFactor(status.enabled))
-      .catch((error) => {
-        console.warn('Failed to load two-factor authentication status:', error);
-      });
-  }, [user?.userId, user?.token]);
-
-  const handleTwoFactorChange = async (value: boolean) => {
-    if (!user?.userId || !user?.token) return;
-    const previous = twoFactor;
-    setTwoFactor(value);
-    setIsTwoFactorLoading(true);
-    try {
-      const status = await setEmailTwoFactorEnabled(user.userId, user.token, value);
-      setTwoFactor(status.enabled);
-    } catch (error) {
-      setTwoFactor(previous);
-      Alert.alert(
-        'Could Not Update',
-        error instanceof Error ? error.message : 'Please try again.'
-      );
-    } finally {
-      setIsTwoFactorLoading(false);
-    }
-  };
 
   const fetchDriverProfile = async () => {
     if (!user?.userId || !user?.token) { // Check if user data is available
@@ -242,11 +214,11 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
   const horizontalPadding = isSmallPhone ? 14 : 16;
 
   const theme = { //coming from themecontext
-    background: darkMode ? '#111' : '#F1F5F9',
-    card: darkMode ? '#1E1E1E' : '#FFF',
-    text: darkMode ? '#FFF' : '#000',
-    secondaryText: darkMode ? '#AAA' : '#666',
-    border: darkMode ? '#333' : '#E2E8F0',
+    background: darkMode ? '#111827' : '#F1F5F9',
+    card: darkMode ? '#1E1E1E' : '#FFFFFF',
+    text: darkMode ? '#FFFFFF' : '#0F172A',
+    secondaryText: darkMode ? '#94A3B8' : '#64748B',
+    border: darkMode ? '#334155' : '#E2E8F0',
 
     fontRegular: 'System', //system font eg. sans-serif
     fontBold: 'System',  //system font with bold weight
@@ -378,15 +350,13 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
                 {profileImage ? (
                   <Image source={{ uri: profileImage }} style={styles.profileImage} resizeMode="cover"/> //display the profile image resizeMode  means how the image should fit in the container
                 ) : (
-                  <MaterialCommunityIcons
-                    name="account"
-                    size={isSmallPhone ? 42 : 50}
-                    color="#2F6BFF"
-                  />
+                  // A photograph-shaped illustration rather than a glyph, so a
+                  // driver without a photo looks the same as a passenger without one.
+                  <ProfileAvatarPlaceholder size={isSmallPhone ? 68 : 76} />
                 )}
                 {isUploadingPhoto && (
                   <View style={styles.avatarUploadingOverlay}>
-                    <ActivityIndicator size="small" color="#FFF" />
+                    <ActivityIndicator size="small" color="#FFFFFF" />
                   </View>
                 )}
                 </View>
@@ -395,7 +365,7 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
                   onPress={() => void handleChangeProfilePicture()}
                   disabled={isUploadingPhoto}
                 >
-                  <MaterialCommunityIcons name="pencil" size={16} color="#FFF" />
+                  <MaterialCommunityIcons name="pencil" size={16} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
 
@@ -509,7 +479,7 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
                 <Text style={styles.detailLabel}>{t('settings.changePassword')}</Text>
                 <Text style={styles.detailValue}>••••••••••</Text>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#999"/>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#94A3B8"/>
               </TouchableOpacity>
 
             <View style={styles.detailItem}>
@@ -629,31 +599,10 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
             <TouchableOpacity style={styles.rowButton} onPress={() => router.push('/reviews-and-ratings')}>
               <MaterialCommunityIcons name="star-half" size={20} color="#2F6BFF" />
               <Text style={styles.rowButtonText}>{t('settings.ratingsAndComplaints')}</Text>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>{t('settings.privacy')}</Text>
-            <View style={[styles.switchRow, styles.lastItem]}>
-              <View style={styles.switchLeft}>
-                <MaterialCommunityIcons name="shield-account" size={20} color="#2F6BFF" />
-                <View style={styles.switchTextWrap}>
-                  <Text style={styles.switchLabel}>{t('settings.twoFactorAuth')}</Text>
-                  <Text style={styles.switchDescription}>
-                    A code will be emailed to you at every login
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={twoFactor}
-                onValueChange={(value) => void handleTwoFactorChange(value)}
-                disabled={isTwoFactorLoading}
-                trackColor={{ false: '#E2E8F0', true: '#2F6BFF' }}
-                thumbColor="#FFF"
-              />
-            </View>
-          </View>
 
           {/*
             Emergency contacts are reachable from the SOS screen, but a driver
@@ -673,7 +622,7 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
                 <Text style={styles.settingLabel}>{t('settings.emergencyContacts')}</Text>
                 <Text style={styles.settingValue}>{t('settings.emergencyContactsHint')}</Text>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
           </View>
 
@@ -690,7 +639,7 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
                 <Text style={styles.settingLabel}>{t('settings.language')}</Text>
                 <Text style={styles.settingValue}>{LANGUAGE_NAMES[language]}</Text>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
 
             <View style={[styles.switchRow, styles.lastItem]}>
@@ -708,7 +657,7 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
                 value={darkMode}
                 onValueChange={setDarkMode}
                 trackColor={{ false: '#E2E8F0', true: '#2F6BFF' }}
-                thumbColor="#FFF"
+                thumbColor="#FFFFFF"
               />
             </View>
           </View>
@@ -719,25 +668,25 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
             <TouchableOpacity style={styles.supportItem} onPress={() => Alert.alert(t('settings.helpAndSupport'), t('settings.helpAndSupportLoading'))}>
               <MaterialCommunityIcons name="help-circle" size={20} color="#2F6BFF" />
               <Text style={styles.rowButtonText}>{t('settings.helpAndSupport')}</Text>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.supportItem}  onPress={() => Alert.alert(t('settings.privacyPolicy'), t('settings.privacyPolicyLoading'))}>
               <MaterialCommunityIcons name="lock" size={20} color="#2F6BFF" />
               <Text style={styles.rowButtonText}>{t('settings.privacyPolicy')}</Text>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.supportItem} onPress={() => Alert.alert(t('settings.termsAndConditions'), t('settings.termsLoading'))}>
               <MaterialCommunityIcons name="file-document" size={20} color="#2F6BFF" />
               <Text style={styles.rowButtonText}>{t('settings.termsAndConditions')}</Text>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.supportItem, styles.lastItem]} onPress={() => Alert.alert(t('settings.aboutUs'), t('settings.aboutUsLoading'))}>
               <MaterialCommunityIcons name="information" size={20} color="#2F6BFF" />
               <Text style={styles.rowButtonText}>{t('settings.aboutUs')}</Text>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
           </View>
 
@@ -806,7 +755,7 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 placeholder="Current password"
-                placeholderTextColor="#999"
+                placeholderTextColor="#94A3B8"
                 secureTextEntry={!showCurrentPassword}
                 style={styles.passwordInput}
               />
@@ -831,7 +780,7 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
                 value={newPassword}
                 onChangeText={setNewPassword}
                 placeholder="New password"
-                placeholderTextColor="#999"
+                placeholderTextColor="#94A3B8"
                 secureTextEntry={!showNewPassword}
                 style={styles.passwordInput}
               />
@@ -871,7 +820,7 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Confirm new password"
-                placeholderTextColor="#999"
+                placeholderTextColor="#94A3B8"
                 secureTextEntry={!showConfirmPassword}
                 style={styles.passwordInput}
               />
@@ -893,7 +842,7 @@ export default function DriverProfileSettingsScreen() { // screen component, thi
                 <Text style={styles.cancelPasswordText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.savePasswordButton} onPress={() => void changePassword()} disabled={isChangingPassword}>
-                {isChangingPassword ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={styles.savePasswordText}>Save password</Text>}
+                {isChangingPassword ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.savePasswordText}>Save password</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -1005,7 +954,7 @@ function createStyles({
     },
     profileId: {
       fontSize: 11,
-      color: '#999',
+      color: '#94A3B8',
       fontWeight: "500",
     },
     card: {
@@ -1036,18 +985,18 @@ function createStyles({
     progressBar: {
       height: 5,
       backgroundColor: '#E2E8F0',
-      borderRadius: 2.5,
+      borderRadius: 3,
       marginBottom: 12,
       overflow: 'hidden',
     },
     progressFill: {
       height: '100%',
       backgroundColor: '#2F6BFF',
-      borderRadius: 2.5,
+      borderRadius: 3,
     },
     completionSubtitle: {
       fontSize: 11,
-      color: '#999',
+      color: '#94A3B8',
       marginBottom: 12,
       fontWeight: "500",
     },
@@ -1074,7 +1023,7 @@ function createStyles({
     completionTabText: {
       fontSize: 10,
       fontWeight: "600",
-      color: '#666',
+      color: '#64748B',
     },
     activeCompletionTabText: {
       color: '#2F6BFF',
@@ -1106,7 +1055,7 @@ function createStyles({
     },
     detailLabel: {
       fontSize: 11,
-      color: '#999',
+      color: '#94A3B8',
       fontWeight: "600",
       marginBottom: 2,
     },
@@ -1166,7 +1115,7 @@ function createStyles({
     routeCode: {
       fontSize: 10,
       fontWeight: "700",
-      color: '#999',
+      color: '#94A3B8',
       flexShrink: 0,
     },
     rowButton: {
@@ -1192,7 +1141,7 @@ function createStyles({
     },
     settingValue: {
       fontSize: 13,
-      color: '#999',
+      color: '#94A3B8',
       marginTop: 2,
       fontWeight: "500",
     },
@@ -1223,7 +1172,7 @@ function createStyles({
     },
     switchDescription: {
       fontSize: 10,
-      color: '#999',
+      color: '#94A3B8',
       marginTop: 2,
       fontWeight: "500",
     },
@@ -1309,13 +1258,13 @@ function createStyles({
     strengthBarTrack: {
       flex: 1,
       height: 5,
-      borderRadius: 2.5,
+      borderRadius: 3,
       backgroundColor: theme.border,
       overflow: 'hidden',
     },
     strengthBarFill: {
       height: '100%',
-      borderRadius: 2.5,
+      borderRadius: 3,
     },
     strengthLabel: {
       fontSize: 11,
@@ -1349,7 +1298,7 @@ function createStyles({
       paddingVertical: 10,
     },
     savePasswordText: {
-      color: '#FFF',
+      color: '#FFFFFF',
       fontSize: 14,
       fontWeight: "700",
     },

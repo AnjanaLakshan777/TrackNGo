@@ -27,8 +27,7 @@ interface LoginApiData {
   email: string;
   firstName: string | null;
   lastName: string | null;
-  twoFactorRequired?: boolean;
-  twoFactorToken?: string | null;
+
   trustedDeviceToken?: string | null;
 }
 
@@ -98,16 +97,7 @@ export default function LoginScreen() {
         }
       );
       const data = response.data;
-      if (data.twoFactorRequired) {
-        if (!data.twoFactorToken) {
-          throw new Error("Two-factor challenge was not created. Please try again.");
-        }
-        router.replace({
-          pathname: "/auth/two-factor",
-          params: { challengeToken: data.twoFactorToken, email: data.email ?? identifier.trim() },
-        });
-        return;
-      }
+
       if (data.trustedDeviceToken) {
         await saveTrustedDeviceToken(data.trustedDeviceToken);
       }

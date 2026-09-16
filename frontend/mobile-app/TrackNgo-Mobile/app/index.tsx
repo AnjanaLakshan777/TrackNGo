@@ -1,16 +1,14 @@
 import { Redirect } from "expo-router";
-import { View, ActivityIndicator } from "react-native";
 import { useSession } from "../store/sessionStore";
+import BrandLoadingScreen from "../components/BrandLoadingScreen";
 
 export default function Index() {
-  const { currentUser, loading } = useSession();
+  const { loading } = useSession();
 
+  // Shown instead of a bare spinner, so the first frame is the launch screen
+  // rather than an anonymous loading indicator.
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#2F6BFF" />
-      </View>
-    );
+    return <BrandLoadingScreen />;
   }
 
   return <Redirect href="/auth/welcome" />;

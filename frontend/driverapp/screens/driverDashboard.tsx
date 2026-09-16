@@ -44,6 +44,7 @@ import {
   accuracyPercent,
 } from "@/utils/gpsQuality";
 import { resolveAssetUrl } from "@/utils/media";
+import { ProfileAvatarPlaceholder } from "@/components/ProfileAvatarPlaceholder";
 import {
   formatStopEta,
   getOrderedStops,
@@ -579,11 +580,11 @@ export default function DriverDashboardScreen() {
     : t("dashboard.noPassengerData");
 
   const theme = {
-    background: darkMode ? "#111" : "#F1F5F9",
-    card: darkMode ? "#1E1E1E" : "#FFF",
-    text: darkMode ? "#FFF" : "#000",
-    secondaryText: darkMode ? "#AAA" : "#666",
-    border: darkMode ? "#333" : "#E2E8F0",
+    background: darkMode ? "#111827" : "#F1F5F9",
+    card: darkMode ? "#1E1E1E" : "#FFFFFF",
+    text: darkMode ? "#FFFFFF" : "#0F172A",
+    secondaryText: darkMode ? "#94A3B8" : "#64748B",
+    border: darkMode ? "#334155" : "#E2E8F0",
   };
 
   const styles = useMemo(
@@ -647,11 +648,7 @@ export default function DriverDashboardScreen() {
                     style={styles.avatarImage}
                   />
                 ) : (
-                  <MaterialCommunityIcons
-                    name="account"
-                    size={isSmallPhone ? 24 : 28}
-                    color="#2F6BFF"
-                  />
+                  <ProfileAvatarPlaceholder size={isSmallPhone ? 42 : 48} />
                 )}
               </TouchableOpacity>
 
@@ -664,7 +661,7 @@ export default function DriverDashboardScreen() {
                   <MaterialCommunityIcons
                     name="calendar"
                     size={14}
-                    color="#999"
+                    color="#94A3B8"
                   />
                   <Text style={styles.dateText}>{todayLabel}</Text>
                 </View>
@@ -919,7 +916,7 @@ export default function DriverDashboardScreen() {
                 <MaterialCommunityIcons
                   name="navigation"
                   size={20}
-                  color="#FFF"
+                  color="#FFFFFF"
                 />
                 <Text style={styles.navigateButtonText}>{t("dashboard.navigate")}</Text>
               </TouchableOpacity>
@@ -1047,7 +1044,7 @@ function createStyles({
     },
     dateText: {
       fontSize: 11,
-      color: "#999",
+      color: "#94A3B8",
       marginLeft: 4,
       fontWeight: "500",
     },
@@ -1345,7 +1342,7 @@ function createStyles({
     },
     etaLabel: {
       fontSize: 11,
-      color: "#999",
+      color: "#94A3B8",
       fontWeight: "600",
     },
     etaTime: {
@@ -1404,7 +1401,7 @@ function createStyles({
     navigateButtonText: {
       fontSize: 14,
       fontWeight: "700",
-      color: "#FFF",
+      color: "#FFFFFF",
       marginLeft: 6,
     },
     statsSection: {
@@ -1444,7 +1441,7 @@ function createStyles({
     },
     statLabel: {
       fontSize: 11,
-      color: "#999",
+      color: "#94A3B8",
       fontWeight: "600",
       textAlign: "center",
     },

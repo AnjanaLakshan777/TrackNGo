@@ -123,10 +123,9 @@ export default function ChatScreen() {
     Array.isArray(avatarUri) ? avatarUri[0] : avatarUri,
   );
   const bottomInset = keyboardVisible ? 0 : insets.bottom;
-  const keyboardLift =
-    Platform.OS === 'android' && keyboardVisible
-      ? Math.max(0, keyboardHeight - insets.bottom)
-      : 0;
+  /* No manual lift. The window resizes above the keyboard on its own, and
+     adding a keyboard-height padding on top of that lifts the composer a
+     second time, pushing it out of the shortened window. */
 
   const listItems = useMemo<ChatRoomListItem[]>(() => {
     const items: ChatRoomListItem[] = [];
@@ -934,7 +933,7 @@ export default function ChatScreen() {
         <View
           style={[
             styles.composerArea,
-            { paddingBottom: 10 + bottomInset + keyboardLift },
+            { paddingBottom: 10 + bottomInset },
           ]}
         >
           {isRecording ? (

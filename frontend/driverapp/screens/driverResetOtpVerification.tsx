@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#000',
+    color: '#0F172A',
     marginBottom: 12,
   },
   subtitle: {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   destination: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#000',
+    color: '#0F172A',
     textAlign: 'center',
     marginBottom: 32,
   },
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 20,
     fontWeight: '700',
-    color: '#000',
+    color: '#0F172A',
   },
   otpBoxFilled: {
     borderColor: '#2F6BFF',

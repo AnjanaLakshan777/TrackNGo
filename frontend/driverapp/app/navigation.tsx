@@ -51,7 +51,7 @@ export default function DriverNavigationScreen() {
 
   const theme = useMemo(
     () => ({
-      background: darkMode ? '#111' : '#F1F5F9',
+      background: darkMode ? '#111827' : '#F1F5F9',
       card: darkMode ? '#1E1E1E' : '#FFFFFF',
       text: darkMode ? '#FFFFFF' : '#111827',
       secondaryText: darkMode ? '#94A3B8' : '#64748B',
