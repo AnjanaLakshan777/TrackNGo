@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -9,14 +9,12 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import QRCode from "react-native-qrcode-svg";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSession } from "../../store/sessionStore";
@@ -38,13 +36,6 @@ import {
 } from "../../services/profileSettingsApi";
 import type { UserProfile } from "../../types/chat";
 import { ProfileAvatarPlaceholder } from "../../components/ProfileAvatarPlaceholder";
-import {
-  beginTwoFactorSetup,
-  disableTwoFactor,
-  enableTwoFactor,
-  type TwoFactorSetup,
-} from "../../services/twoFactorApi";
-import { clearTrustedDeviceToken, saveTrustedDeviceToken } from "../../services/trustedDeviceStorage";
 
 const BLUE = "#2378E8";
 const AVATAR_SIZE = 112;
@@ -52,7 +43,6 @@ const AVATAR_SIZE = 112;
 const profileCopy = {
   en: {
     header: "Profile & Settings",
-    completion: "Profile Completion",
     bankHint: "Complete your profile details to reach 100%",
     professional: "Professional Details",
     fullName: "Full Name",
@@ -67,22 +57,6 @@ const profileCopy = {
     tamil: "Tamil",
     userId: "ID",
     privacy: "Privacy",
-    twoFactor: "Two-Factor Authentication",
-    twoFactorSetupTitle: "Set up two-factor authentication",
-    twoFactorSetupInstructions: "Scan this QR code with Google Authenticator, Aegis, or Microsoft Authenticator, then enter the 6-digit code.",
-    twoFactorSecret: "Manual setup key",
-    twoFactorAuthenticatorHint: "Keep this key private. It can be used if you cannot scan the QR code.",
-    twoFactorCodePlaceholder: "6-digit authenticator code",
-    twoFactorEnable: "Enable",
-    twoFactorDisableTitle: "Disable two-factor authentication",
-    twoFactorDisableInstructions: "Enter the current code from your authenticator app to disable two-factor authentication.",
-    twoFactorDisable: "Disable",
-    twoFactorVerify: "Verify code",
-    twoFactorEnabled: "Two-factor authentication enabled",
-    twoFactorEnabledMessage: "New devices will require an authenticator code. This device will be remembered for 180 days.",
-    twoFactorDisabled: "Two-factor authentication disabled",
-    twoFactorDisabledMessage: "Authenticator verification has been removed from login.",
-    twoFactorError: "Could not update two-factor authentication",
     safety: "Safety",
     emergencyContacts: "Emergency Contacts",
     emergencyContactsHint: "Manage the people we notify in an SOS",
@@ -136,7 +110,6 @@ const profileCopy = {
   },
   si: {
     header: "පැතිකඩ සහ සැකසුම්",
-    completion: "පැතිකඩ සම්පූර්ණත්වය",
     bankHint: "පැතිකඩ 100%ක් සම්පූර්ණ කිරීමට ඔබගේ සියලු විස්තර එක් කරන්න",
     professional: "පෞද්ගලික විස්තර",
     fullName: "සම්පූර්ණ නම",
@@ -151,22 +124,6 @@ const profileCopy = {
     tamil: "දෙමළ",
     userId: "හඳුනාගැනීමේ අංකය",
     privacy: "පෞද්ගලිකත්වය",
-    twoFactor: "ද්වි-සාධක සත්‍යාපනය",
-    twoFactorSetupTitle: "ද්වි-සාධක සත්‍යාපනය සකසන්න",
-    twoFactorSetupInstructions: "මෙම QR කේතය Google Authenticator, Aegis හෝ Microsoft Authenticator යෙදුමකින් ස්කෑන් කර අංක 6ක කේතය ඇතුළත් කරන්න.",
-    twoFactorSecret: "අතින් සකස් කිරීමේ යතුර",
-    twoFactorAuthenticatorHint: "මෙම යතුර රහසිගතව තබාගන්න. QR කේතය ස්කෑන් කළ නොහැකි නම් එය භාවිත කළ හැකිය.",
-    twoFactorCodePlaceholder: "Authenticator අංක 6ක කේතය",
-    twoFactorEnable: "සක්‍රිය කරන්න",
-    twoFactorDisableTitle: "ද්වි-සාධක සත්‍යාපනය අක්‍රිය කරන්න",
-    twoFactorDisableInstructions: "ද්වි-සාධක සත්‍යාපනය අක්‍රිය කිරීමට ඔබගේ Authenticator යෙදුමේ වත්මන් කේතය ඇතුළත් කරන්න.",
-    twoFactorDisable: "අක්‍රිය කරන්න",
-    twoFactorVerify: "කේතය තහවුරු කරන්න",
-    twoFactorEnabled: "ද්වි-සාධක සත්‍යාපනය සක්‍රියයි",
-    twoFactorEnabledMessage: "නව උපාංගවලදී Authenticator කේතයක් අවශ්‍ය වේ. මෙම උපාංගය දින 180ක් මතක තබාගනු ඇත.",
-    twoFactorDisabled: "ද්වි-සාධක සත්‍යාපනය අක්‍රියයි",
-    twoFactorDisabledMessage: "ඇතුළු වීමේදී Authenticator සත්‍යාපනය ඉවත් කරන ලදී.",
-    twoFactorError: "ද්වි-සාධක සත්‍යාපනය යාවත්කාලීන කළ නොහැක",
     safety: "ආරක්ෂාව",
     emergencyContacts: "හදිසි ඇමතුම් සම්බන්ධතා",
     emergencyContactsHint: "SOS අවස්ථාවකදී අප දැනුම් දෙන පුද්ගලයින් කළමනාකරණය කරන්න",
@@ -220,7 +177,6 @@ const profileCopy = {
   },
   ta: {
     header: "சுயவிவரம் & அமைப்புகள்",
-    completion: "சுயவிவர நிறைவு",
     bankHint: "100% அடைய உங்கள் சுயவிவர விவரங்களை நிறைவு செய்யவும்",
     professional: "தனிப்பட்ட விவரங்கள்",
     fullName: "முழு பெயர்",
@@ -235,22 +191,6 @@ const profileCopy = {
     tamil: "தமிழ்",
     userId: "ஐடி",
     privacy: "தனியுரிமை",
-    twoFactor: "இரு-காரணி அங்கீகாரம்",
-    twoFactorSetupTitle: "இரு-காரணி அங்கீகாரத்தை அமைக்கவும்",
-    twoFactorSetupInstructions: "Google Authenticator, Aegis அல்லது Microsoft Authenticator மூலம் இந்த QR குறியீட்டை ஸ்கேன் செய்து, 6 இலக்க குறியீட்டை உள்ளிடவும்.",
-    twoFactorSecret: "கைமுறை அமைப்பு விசை",
-    twoFactorAuthenticatorHint: "இந்த விசையை ரகசியமாக வைத்திருங்கள். QR குறியீட்டை ஸ்கேன் செய்ய முடியாவிட்டால் இதைப் பயன்படுத்தலாம்.",
-    twoFactorCodePlaceholder: "6 இலக்க அங்கீகார குறியீடு",
-    twoFactorEnable: "இயக்கு",
-    twoFactorDisableTitle: "இரு-காரணி அங்கீகாரத்தை முடக்கவும்",
-    twoFactorDisableInstructions: "இரு-காரணி அங்கீகாரத்தை முடக்க உங்கள் அங்கீகார பயன்பாட்டிலிருந்து தற்போதைய குறியீட்டை உள்ளிடவும்.",
-    twoFactorDisable: "முடக்கு",
-    twoFactorVerify: "குறியீட்டை சரிபார்க்கவும்",
-    twoFactorEnabled: "இரு-காரணி அங்கீகாரம் இயக்கப்பட்டது",
-    twoFactorEnabledMessage: "புதிய சாதனங்களுக்கு அங்கீகார குறியீடு தேவைப்படும். இந்த சாதனம் 180 நாட்களுக்கு நினைவில் வைக்கப்படும்.",
-    twoFactorDisabled: "இரு-காரணி அங்கீகாரம் முடக்கப்பட்டது",
-    twoFactorDisabledMessage: "உள்நுழைவிலிருந்து அங்கீகார சரிபார்ப்பு அகற்றப்பட்டது.",
-    twoFactorError: "இரு-காரணி அங்கீகாரத்தை புதுப்பிக்க முடியவில்லை",
     safety: "பாதுகாப்பு",
     emergencyContacts: "அவசர தொடர்புகள்",
     emergencyContactsHint: "SOS நேரத்தில் நாங்கள் அறிவிக்கும் நபர்களை நிர்வகிக்கவும்",
@@ -360,34 +300,6 @@ function PasswordField({
   );
 }
 
-function ToggleRow({
-  title,
-  subtitle,
-  value,
-  onValueChange,
-}: {
-  title: string;
-  subtitle?: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-}) {
-  return (
-    <View style={styles.toggleRow}>
-      <View style={styles.toggleText}>
-        <Text style={styles.toggleTitle}>{title}</Text>
-        {subtitle ? <Text style={styles.toggleSubtitle}>{subtitle}</Text> : null}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ false: "#D3D7DE", true: "#B8D4FA" }}
-        thumbColor={value ? BLUE : "#FFFFFF"}
-        ios_backgroundColor="#D3D7DE"
-      />
-    </View>
-  );
-}
-
 export default function PassengerProfileScreen() {
   const router = useRouter();
   const { currentUser, clearCurrentUser } = useSession();
@@ -403,11 +315,6 @@ export default function PassengerProfileScreen() {
   const [editVisible, setEditVisible] = useState(false);
   const [languageVisible, setLanguageVisible] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [twoFactorVisible, setTwoFactorVisible] = useState(false);
-  const [twoFactorMode, setTwoFactorMode] = useState<"enable" | "disable">("enable");
-  const [twoFactorSetup, setTwoFactorSetup] = useState<TwoFactorSetup | null>(null);
-  const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [twoFactorBusy, setTwoFactorBusy] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -457,11 +364,6 @@ export default function PassengerProfileScreen() {
     }, [loadData]),
   );
 
-  const completion = useMemo(() => {
-    if (!profile) return 0;
-    const completed = [profile.fullName, profile.email, profile.phoneNumber].filter(Boolean).length;
-    return [0, 30, 55, 85][completed];
-  }, [profile]);
 
   const openEdit = () => {
     if (!profile) return;
@@ -572,57 +474,6 @@ export default function PassengerProfileScreen() {
     }
   };
 
-  const handleTwoFactorToggle = async (enabled: boolean) => {
-    if (!userId) return;
-    setTwoFactorMode(enabled ? "enable" : "disable");
-    setTwoFactorCode("");
-    setTwoFactorSetup(null);
-    if (!enabled) {
-      setTwoFactorVisible(true);
-      return;
-    }
-
-    try {
-      setTwoFactorBusy(true);
-      setTwoFactorSetup(await beginTwoFactorSetup(userId));
-      setTwoFactorVisible(true);
-    } catch (error) {
-      Alert.alert(copy.twoFactorError, error instanceof Error ? error.message : copy.tryAgain);
-    } finally {
-      setTwoFactorBusy(false);
-    }
-  };
-
-  const confirmTwoFactor = async () => {
-    if (!userId || twoFactorCode.replace(/\D/g, "").length !== 6) {
-      Alert.alert(copy.missingDetails, copy.twoFactorCodePlaceholder);
-      return;
-    }
-    try {
-      setTwoFactorBusy(true);
-      if (twoFactorMode === "enable") {
-        const trustedDeviceToken = await enableTwoFactor(userId, twoFactorCode);
-        if (!trustedDeviceToken) {
-          throw new Error("The trusted-device credential was not created. Please restart the app and try again.");
-        }
-        await saveTrustedDeviceToken(trustedDeviceToken);
-        setSettings((current) => current ? { ...current, twoFactorAuthentication: true } : current);
-        setTwoFactorVisible(false);
-        Alert.alert(copy.twoFactorEnabled, copy.twoFactorEnabledMessage);
-      } else {
-        await disableTwoFactor(userId, twoFactorCode);
-        await clearTrustedDeviceToken();
-        setSettings((current) => current ? { ...current, twoFactorAuthentication: false } : current);
-        setTwoFactorVisible(false);
-        Alert.alert(copy.twoFactorDisabled, copy.twoFactorDisabledMessage);
-      }
-      setTwoFactorCode("");
-    } catch (error) {
-      Alert.alert(copy.twoFactorError, error instanceof Error ? error.message : copy.tryAgain);
-    } finally {
-      setTwoFactorBusy(false);
-    }
-  };
 
   const selectLanguage = async (language: ProfileLanguage) => {
     if (!userId || !settings) return;
@@ -728,11 +579,6 @@ export default function PassengerProfileScreen() {
           <Text style={styles.name}>{profile.fullName || copy.passenger}</Text>
           <Text style={styles.userId}>{copy.userId}: PSG-{String(profile.userId).padStart(3, "0")}</Text>
         </View>
-        <View style={styles.completionCard}>
-          <View style={styles.completionTop}><Text style={styles.cardTitle}>{copy.completion}</Text><Text style={styles.completionValue}>{completion}%</Text></View>
-          <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${completion}%` }]} /></View>
-          <Text style={styles.helperText}>{copy.bankHint}</Text>
-        </View>
 
         <Text style={styles.sectionTitle}>{copy.professional}</Text>
         <View style={styles.card}>
@@ -745,10 +591,6 @@ export default function PassengerProfileScreen() {
         <Text style={styles.sectionTitle}>{copy.settings}</Text>
         <View style={styles.card}><DetailRow icon="language" label={copy.language} value={settings.language === "si" ? copy.sinhala : settings.language === "ta" ? copy.tamil : copy.english} onPress={() => setLanguageVisible(true)} /></View>
 
-        <Text style={styles.sectionTitle}>{copy.privacy}</Text>
-        <View style={styles.card}>
-          <ToggleRow title={copy.twoFactor} value={settings.twoFactorAuthentication} onValueChange={(value) => void handleTwoFactorToggle(value)} />
-        </View>
 
         <Text style={styles.sectionTitle}>{copy.safety}</Text>
         <View style={styles.card}>
@@ -808,41 +650,6 @@ export default function PassengerProfileScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      <Modal visible={twoFactorVisible} transparent animationType="slide" onRequestClose={() => setTwoFactorVisible(false)}>
-        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <View style={styles.twoFactorModalCard}>
-            <Text style={styles.modalTitle}>{twoFactorMode === "enable" ? copy.twoFactorSetupTitle : copy.twoFactorDisableTitle}</Text>
-            {twoFactorMode === "enable" && twoFactorSetup ? (
-              <>
-                <Text style={styles.twoFactorInstructions}>{copy.twoFactorSetupInstructions}</Text>
-                <View style={styles.qrWrap}><QRCode value={twoFactorSetup.provisioningUri} size={190} /></View>
-                <Text style={styles.secretLabel}>{copy.twoFactorSecret}</Text>
-                <Text selectable style={styles.secretValue}>{twoFactorSetup.secret}</Text>
-                <Text style={styles.twoFactorHint}>{copy.twoFactorAuthenticatorHint}</Text>
-              </>
-            ) : (
-              <Text style={styles.twoFactorInstructions}>{copy.twoFactorDisableInstructions}</Text>
-            )}
-            <TextInput
-              style={styles.input}
-              placeholder={copy.twoFactorCodePlaceholder}
-              value={twoFactorCode}
-              onChangeText={(value) => setTwoFactorCode(value.replace(/\D/g, "").slice(0, 6))}
-              keyboardType="number-pad"
-              maxLength={6}
-              autoFocus
-            />
-            <View style={styles.modalActions}>
-              <Pressable style={styles.cancelButton} onPress={() => setTwoFactorVisible(false)} disabled={twoFactorBusy}>
-                <Text style={styles.cancelText}>{copy.cancel}</Text>
-              </Pressable>
-              <Pressable style={styles.primaryButton} onPress={() => void confirmTwoFactor()} disabled={twoFactorBusy}>
-                {twoFactorBusy ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.primaryText}>{twoFactorMode === "enable" ? copy.twoFactorEnable : copy.twoFactorDisable}</Text>}
-              </Pressable>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -861,12 +668,7 @@ const styles = StyleSheet.create({
   photoButton: { position: "absolute", right: -4, bottom: 7, width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: BLUE, borderWidth: 2, borderColor: "#FFFFFF" },
   name: { fontSize: 24, fontWeight: "700", color: "#111827" },
   userId: { marginTop: 2, fontSize: 14, color: "#737B87" },
-  completionCard: { padding: 16, borderWidth: 1, borderColor: "#E2E4E8", borderRadius: 12, marginBottom: 28 },
-  completionTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   cardTitle: { fontSize: 16, fontWeight: "700", color: "#1B2433" },
-  completionValue: { fontSize: 13, fontWeight: "600", color: BLUE },
-  progressTrack: { height: 8, borderRadius: 4, backgroundColor: "#EEF0F4", marginTop: 14, overflow: "hidden" },
-  progressFill: { height: "100%", borderRadius: 4, backgroundColor: BLUE },
   helperText: { marginTop: 12, fontSize: 11, fontWeight: "500", color: "#737B87" },
   sectionTitle: { marginBottom: 10, marginLeft: 2, fontSize: 16, fontWeight: "700", color: "#717987" },
   card: { borderWidth: 1, borderColor: "#E2E4E8", borderRadius: 12, overflow: "hidden", marginBottom: 26 },
@@ -875,22 +677,15 @@ const styles = StyleSheet.create({
   detailText: { flex: 1, marginLeft: 16 },
   detailLabel: { fontSize: 11, fontWeight: "600", color: "#7B828D", marginBottom: 3 },
   detailValue: { fontSize: 13, fontWeight: "600", color: "#4B4E54" },
-  toggleRow: { minHeight: 70, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#EEF0F2" },
-  toggleText: { flex: 1, paddingVertical: 12 },
-  toggleTitle: { fontSize: 16, color: "#1B2433", fontWeight: "500" },
-  toggleSubtitle: { marginTop: 4, fontSize: 12, color: "#7B828D" },
   emptyText: { fontSize: 14, fontWeight: "600", color: "#697386", marginBottom: 16 },
   retryButton: { borderRadius: 8, backgroundColor: BLUE, paddingHorizontal: 22, paddingVertical: 11 },
   retryText: { color: "#FFFFFF", fontWeight: "700" },
   modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.35)" },
   modalCard: { backgroundColor: "#FFFFFF", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
-  twoFactorModalCard: { maxHeight: "92%", backgroundColor: "#FFFFFF", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
   modalTitle: { fontSize: 18, fontWeight: "700", color: "#111827", marginBottom: 16 },
-  twoFactorInstructions: { fontSize: 14, lineHeight: 21, color: "#5E6673", marginBottom: 14 },
   qrWrap: { alignSelf: "center", padding: 12, marginBottom: 14, borderRadius: 12, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#E2E8F0" },
   secretLabel: { fontSize: 11, fontWeight: "600", color: "#7B828D", marginBottom: 4 },
   secretValue: { padding: 10, borderRadius: 8, backgroundColor: "#F1F5F9", color: "#1B2433", fontSize: 13, letterSpacing: 1, fontWeight: "600" },
-  twoFactorHint: { marginTop: 8, marginBottom: 12, fontSize: 12, lineHeight: 18, color: "#7B828D" },
   input: { height: 48, borderWidth: 1, borderColor: "#D9DDE4", borderRadius: 9, paddingHorizontal: 13, marginBottom: 12, color: "#111827" },
   passwordFieldWrap: { position: "relative", justifyContent: "center", marginBottom: 12 },
   passwordInput: { height: 48, borderWidth: 1, borderColor: "#D9DDE4", borderRadius: 9, paddingHorizontal: 13, paddingRight: 42, color: "#111827" },

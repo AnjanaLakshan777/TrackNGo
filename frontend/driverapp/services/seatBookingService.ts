@@ -305,14 +305,18 @@ export const seatBookingService = {
   },
 
   /**
-   * Mark a passenger as boarded
+   * Mark a passenger as boarded.
+   *
+   * Keyed on the booking reference rather than the seat booking id: the
+   * endpoint matches on booking_reference so that every seat on a multi-seat
+   * booking boards together. A numeric id matches no rows and the call fails.
    */
   async markPassengerBoarded(
-    seatBookingId: number,
+    bookingReference: string,
     token: string
   ): Promise<boolean> {
     try {
-      const url = `${API_URL}/booking-flow/bookings/${seatBookingId}/boarded`;
+      const url = `${API_URL}/booking-flow/bookings/${encodeURIComponent(bookingReference)}/boarded`;
       console.log('Marking passenger as boarded:', url);
       
       const response = await fetch(url, {

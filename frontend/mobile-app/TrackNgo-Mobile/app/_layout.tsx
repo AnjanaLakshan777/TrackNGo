@@ -8,6 +8,7 @@ import {
 import { chatSocket } from "../services/chatSocket";
 import { SessionProvider, useSession } from "../store/sessionStore";
 import { LanguageProvider } from "../utils/i18n";
+import BrandLoadingScreen from "../components/BrandLoadingScreen";
 
 function GlobalPresenceConnection() {
   const { currentUser } = useSession();
@@ -46,8 +47,10 @@ function RootLayoutNav() {
     router.replace("/auth/welcome");
   }, [currentUser, loading, segments, router]);
 
+  // The saved session is still being read. This used to render nothing,
+  // which showed a blank frame between launch and the first real screen.
   if (loading) {
-    return null; // or a loading spinner
+    return <BrandLoadingScreen />;
   }
 
   return (
@@ -59,7 +62,6 @@ function RootLayoutNav() {
       <Stack.Screen name="auth/forgot-password" />
       <Stack.Screen name="auth/reset-otp-verification" />
       <Stack.Screen name="auth/reset-password" />
-      <Stack.Screen name="auth/two-factor" />
       <Stack.Screen name="tabs" />
     </Stack>
   );

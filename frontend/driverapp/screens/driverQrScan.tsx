@@ -50,18 +50,12 @@ export default function DriverQrScanScreen() {
       return;
     }
 
-    const seatBookingId = Number(params.seatBookingId);
-    if (!Number.isFinite(seatBookingId)) {
-      Alert.alert(t('allocations.error'), t('allocations.failedToMarkBoarded'), [
-        { text: t('common.cancel'), onPress: () => router.back() },
-      ]);
-      return;
-    }
-
+    // expectedReference is already proven non-empty and equal to the scanned
+    // ticket by the mismatch check above, so it is what we board on.
     try {
       setIsVerifying(true);
       const token = await seatBookingService.getToken();
-      const success = await seatBookingService.markPassengerBoarded(seatBookingId, token);
+      const success = await seatBookingService.markPassengerBoarded(expectedReference, token);
 
       if (success) {
         Alert.alert(t('allocations.success'), t('allocations.qrScanSuccessMessage'), [

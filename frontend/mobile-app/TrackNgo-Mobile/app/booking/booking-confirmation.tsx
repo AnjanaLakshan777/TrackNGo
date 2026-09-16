@@ -49,7 +49,9 @@ export default function BookingConfirmationScreen() {
 
   // Build the QR payload with all ticket information for driver verification
   const qrData = JSON.stringify({
-    bookingId,
+    // The driver's scanner reads bookingRef, and View Ticket already emits
+    // that key. Under any other name a fresh ticket scans as invalid.
+    bookingRef: bookingId,
     from,
     to,
     date,

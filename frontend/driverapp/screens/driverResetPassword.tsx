@@ -85,7 +85,7 @@ export default function DriverResetPasswordScreen() {
           <TextInput
             style={styles.input}
             placeholder="Enter new password"
-            placeholderTextColor="#999"
+            placeholderTextColor="#94A3B8"
             value={newPassword}
             onChangeText={(t) => {
               setNewPassword(t);
@@ -100,7 +100,7 @@ export default function DriverResetPasswordScreen() {
             onPress={() => setShowNewPassword((v) => !v)}
             disabled={isLoading}
           >
-            <MaterialCommunityIcons name={showNewPassword ? 'eye-off' : 'eye'} size={22} color="#333" />
+            <MaterialCommunityIcons name={showNewPassword ? 'eye-off' : 'eye'} size={22} color="#334155" />
           </TouchableOpacity>
         </View>
         {errors.newPassword ? <Text style={styles.errorText}>{errors.newPassword}</Text> : null}
@@ -111,7 +111,7 @@ export default function DriverResetPasswordScreen() {
           <TextInput
             style={styles.input}
             placeholder="Re-enter new password"
-            placeholderTextColor="#999"
+            placeholderTextColor="#94A3B8"
             value={confirmPassword}
             onChangeText={(t) => {
               setConfirmPassword(t);
@@ -126,7 +126,7 @@ export default function DriverResetPasswordScreen() {
             onPress={() => setShowConfirmPassword((v) => !v)}
             disabled={isLoading}
           >
-            <MaterialCommunityIcons name={showConfirmPassword ? 'eye-off' : 'eye'} size={22} color="#333" />
+            <MaterialCommunityIcons name={showConfirmPassword ? 'eye-off' : 'eye'} size={22} color="#334155" />
           </TouchableOpacity>
         </View>
         {errors.confirmPassword ? <Text style={styles.errorText}>{errors.confirmPassword}</Text> : null}
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#000',
+    color: '#0F172A',
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -204,14 +204,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#000',
+    color: '#0F172A',
     marginBottom: 10,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     paddingLeft: 14,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 14,
     fontSize: 14,
-    color: '#000',
+    color: '#0F172A',
   },
   eyeIcon: {
     paddingHorizontal: 10,
@@ -260,6 +260,6 @@ const styles = StyleSheet.create({
   resetButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFF',
+    color: '#FFFFFF',
   },
 });

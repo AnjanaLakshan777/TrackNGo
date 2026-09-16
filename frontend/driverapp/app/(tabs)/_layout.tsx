@@ -63,7 +63,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: '#2F6BFF',
-        tabBarInactiveTintColor: darkMode ? '#888' : '#9AA4B2',
+        tabBarInactiveTintColor: darkMode ? '#64748B' : '#9AA4B2',
         tabBarButton: HapticTab,
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
         tabBarStyle: {
@@ -71,7 +71,7 @@ export default function TabLayout() {
           paddingTop: 6,
           paddingBottom: Math.max(insets.bottom, 10),
           backgroundColor: darkMode ? '#1E1E1E' : '#FFFFFF',
-          borderTopColor: darkMode ? '#333' : '#E9EDF3',
+          borderTopColor: darkMode ? '#334155' : '#E9EDF3',
           borderTopWidth: 1,
         },
       }}

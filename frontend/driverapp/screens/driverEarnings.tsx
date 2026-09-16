@@ -192,7 +192,7 @@ export default function DriverEarningsScreen() {
           body {
             font-family: Arial, sans-serif;
             padding: 24px;
-            color: #111;
+            color: #111827;
           }
 
           .header {
@@ -210,7 +210,7 @@ export default function DriverEarningsScreen() {
 
           .sub {
             font-size: 12px;
-            color: #666;
+            color: #64748B;
             margin-top: 6px;
           }
 
@@ -223,7 +223,7 @@ export default function DriverEarningsScreen() {
 
           .label {
             font-size: 12px;
-            color: #777;
+            color: #64748B;
           }
 
           .value {
@@ -248,7 +248,7 @@ export default function DriverEarningsScreen() {
 
           td {
             padding: 10px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #E2E8F0;
             font-size: 12px;
           }
 
@@ -264,7 +264,7 @@ export default function DriverEarningsScreen() {
             margin-top: 30px;
             text-align: center;
             font-size: 10px;
-            color: #999;
+            color: #94A3B8;
           }
         </style>
       </head>
@@ -341,11 +341,11 @@ export default function DriverEarningsScreen() {
   const { darkMode } = useTheme(); // Get the current theme mode (dark or light) from the ThemeContext to apply appropriate colors to the UI elements, ensuring that the design is consistent with the user's theme preference and provides good readability and visual appeal in both modes.
 
   const theme = useMemo(() => ({
-  background: darkMode ? '#111' : '#F1F5F9',
-  card: darkMode ? '#1E1E1E' : '#FFF',
-  text: darkMode ? '#FFF' : '#000',
-  secondaryText: darkMode ? '#AAA' : '#666',
-  border: darkMode ? '#333' : '#E2E8F0',
+  background: darkMode ? '#111827' : '#F1F5F9',
+  card: darkMode ? '#1E1E1E' : '#FFFFFF',
+  text: darkMode ? '#FFFFFF' : '#0F172A',
+  secondaryText: darkMode ? '#94A3B8' : '#64748B',
+  border: darkMode ? '#334155' : '#E2E8F0',
   }), [darkMode]);
 
   const styles = useMemo(
@@ -505,7 +505,7 @@ export default function DriverEarningsScreen() {
           </View>
 
           <TouchableOpacity style={styles.exportButton} onPress={handleExportPDF}>
-            <MaterialCommunityIcons name="download" size={20} color='#FFF' />
+            <MaterialCommunityIcons name="download" size={20} color='#FFFFFF' />
             <Text style={styles.exportButtonText}>{t('earnings.exportMonthlyReport')}</Text>
           </TouchableOpacity>
         </View>
@@ -707,7 +707,7 @@ function createStyles({
     },
     updatedText: {
       fontSize: 11,
-      color: '#999',
+      color: '#94A3B8',
       fontWeight: "500",
     },
     weeklySection: {
@@ -738,7 +738,7 @@ function createStyles({
     },
     weeklySubtitle: {
       fontSize: 11,
-      color: '#999',
+      color: '#94A3B8',
       marginTop: 2,
       fontWeight: "500",
     },
@@ -762,7 +762,7 @@ function createStyles({
     },
     yAxisLabel: {
       fontSize: 11,
-      color: '#999',
+      color: '#94A3B8',
       fontWeight: "600",
     },
     barsContainer: {
@@ -789,7 +789,7 @@ function createStyles({
     },
     dayLabel: {
       fontSize: 11,
-      color: '#666',
+      color: '#64748B',
       fontWeight: "600",
     },
     viewAllLink: {
@@ -850,7 +850,7 @@ function createStyles({
     },
     dateTimeText: {
       fontSize: 11,
-      color: '#999',
+      color: '#94A3B8',
       marginTop: 4,
       fontWeight: "500",
     },
@@ -909,7 +909,7 @@ function createStyles({
     exportButtonText: {
       fontSize: 14,
       fontWeight: "700",
-      color: '#fff',
+      color: '#FFFFFF',
       marginLeft: 8,
     },
     modalOverlay: {
@@ -981,7 +981,7 @@ function createStyles({
     },
 
     closeText: {
-      color: '#FFF',
+      color: '#FFFFFF',
       fontWeight: "700",
     },
 
@@ -1001,7 +1001,7 @@ weeklyTitleModal: {
 
 weeklySubtitleModal: {
   fontSize: 11,
-  color: '#999',
+  color: '#94A3B8',
   textAlign: 'center',
   marginBottom: 16,
   marginTop: 4,

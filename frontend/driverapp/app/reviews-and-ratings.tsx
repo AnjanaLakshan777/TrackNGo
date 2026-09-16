@@ -65,11 +65,11 @@ export default function ReviewsAndRatingsScreen() {
   const [complaintsError, setComplaintsError] = useState<string | null>(null);
 
   const theme = {
-    background: darkMode ? "#111" : "#F1F5F9",
-    card: darkMode ? "#1E1E1E" : "#FFF",
-    text: darkMode ? "#FFF" : "#000",
-    secondaryText: darkMode ? "#AAA" : "#666",
-    border: darkMode ? "#333" : "#E2E8F0",
+    background: darkMode ? "#111827" : "#F1F5F9",
+    card: darkMode ? "#1E1E1E" : "#FFFFFF",
+    text: darkMode ? "#FFFFFF" : "#0F172A",
+    secondaryText: darkMode ? "#94A3B8" : "#64748B",
+    border: darkMode ? "#334155" : "#E2E8F0",
   };
 
   const loadData = useCallback(
