@@ -33,11 +33,12 @@ type Complaint = AdminComplaint
 type SortDir = 'asc' | 'desc' | null
 
 const PER_PAGE = 5
-// Same VITE_API_BASE_URL pattern as DashboardLayout.tsx / Chat.tsx: use the
-// configured production backend origin when set, otherwise fall back to the
-// local dev backend unchanged.
+// VITE_API_BASE_URL when set; otherwise evidence images resolve against the
+// dashboard's own origin, where the Vite dev proxy and the vercel.json rewrite
+// both forward /uploads to the backend. The old http://localhost:8080 fallback
+// only existed on a developer's machine, so images broke once deployed.
 const BACKEND_BASE_URL =
-  String(import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/$/, '') || 'http://localhost:8080'
+  String(import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/$/, '')
 
 /** Returns the badge color classes used for complaint priority pills. */
 export function priorityBadge(priority: string) {
@@ -62,7 +63,7 @@ export function resolveImageUrl(url: string) {
   }
 
   const normalizedPath = url.startsWith('/') ? url : `/${url}`
-  return new URL(normalizedPath, BACKEND_BASE_URL).toString()
+  return new URL(normalizedPath, BACKEND_BASE_URL || window.location.origin).toString()
 }
 
 /** Formats an ISO complaint date into a readable label for the admin UI. */

@@ -1,10 +1,13 @@
 import authService from './authService'
 
-// Same VITE_API_BASE_URL pattern as DashboardLayout.tsx / Chat.tsx: use the
-// configured production backend origin when set, otherwise fall back to the
-// local dev backend unchanged.
+// VITE_API_BASE_URL when set; otherwise requests stay relative ("/api/..."),
+// like every other admin service. The Vite dev proxy forwards them locally and
+// the vercel.json rewrite forwards them in production. The old fallback,
+// http://127.0.0.1:8080, only existed on a developer's machine: a deployed
+// dashboard polled nothing, the poll loop swallowed the error, and the SOS
+// popup never appeared.
 export const SOS_API_BASE =
-  String(import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/$/, '') || 'http://127.0.0.1:8080'
+  String(import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/$/, '')
 
 export type EmergencyContact = {
   contactId: number

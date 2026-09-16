@@ -17,8 +17,11 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final ChatWebSocketHandler chatHandler;
     private final TrackingWebSocketHandler trackingHandler;
 
-    // Only matters for browser clients (the admin dashboard) — native mobile
-    // WebSocket clients don't send an Origin header, so this never blocks them.
+    // Applied to any handshake whose Origin isn't this server's own. Browsers
+    // always send Origin, and so does React Native on Android: it defaults the
+    // header to the socket URL's scheme and host. That default is same-origin,
+    // so the apps pass only because server.forward-headers-strategy lets Tomcat
+    // see the https scheme the proxy received.
     @Value("${trackngo.cors.allowed-origins}")
     private String allowedOriginsProperty;
 

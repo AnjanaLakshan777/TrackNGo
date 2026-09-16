@@ -3,6 +3,12 @@
 -- SEED DATA - SRI LANKAN SAMPLE DATA
 -- All passwords are hashed bcrypt of 'Test@1234'
 -- Hash: $2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK
+--
+-- Load this ONLY after trackngo_complete.sql into a fresh, otherwise empty
+-- database. This file deliberately uses fixed primary keys.
+--
+-- Dates used by active app screens are normalised relative to CURDATE() near
+-- the end of this file, so the demo remains useful in any calendar year.
 -- =============================================
 
 -- =============================================
@@ -15,32 +21,32 @@ INSERT INTO user (user_id, first_name, last_name, email, password, user_type, is
 (3,  'Kasun',   'Jayawardena',  'kasun.jayawardena@trackngo.lk','$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'admin',     true,  true,  'en', 'auto',  NOW()),
 (4,  'Amara',   'Silva',        'amara.silva@gmail.com',       '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true,  true,  'en', 'light', NULL),
 (5,  'Dilan',   'Rajapaksa',    'dilan.rajapaksa@gmail.com',   '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true,  true,  'si', 'dark',  NULL),
-(6,  'Sanduni', 'Wickramasinghe','sanduni.wick@yahoo.com',     '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', false, true,  'en', 'light', NULL),
+(6,  'Sanduni', 'Wickramasinghe','sanduni.wick@yahoo.com',     '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true, true,  'en', 'light', NULL),
 (7,  'Chathura','Bandara',      'chathura.b@hotmail.com',      '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true,  true,  'si', 'auto',  NULL),
 (8,  'Hiruni',  'Dissanayake',  'hiruni.d@gmail.com',          '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true,  true,  'en', 'light', NULL),
 (9,  'Nuwan',   'Kumara',       'nuwan.kumara@gmail.com',      '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true,  true,  'en', 'dark',  NULL),
-(10, 'Tharushi','Gunasekara',   'tharushi.g@gmail.com',        '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', false, true,  'si', 'light', NULL),
+(10, 'Tharushi','Gunasekara',   'tharushi.g@gmail.com',        '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true, true,  'si', 'light', NULL),
 (11, 'Prasad',  'Rathnayake',   'prasad.r@gmail.com',          '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true,  true,  'en', 'auto',  NULL),
 (12, 'Malsha',  'Seneviratne',  'malsha.s@gmail.com',          '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true,  true,  'si', 'dark',  NULL),
-(13, 'Lahiru',  'Pathirana',    'lahiru.p@gmail.com',          '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true,  false, 'en', 'light', NULL),
+(13, 'Lahiru',  'Pathirana',    'lahiru.p@gmail.com',          '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'passenger', true,  true, 'en', 'light', NULL),
 (14, 'Roshan',  'Mendis',       'roshan.mendis@gmail.com',     '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'en', 'light', NULL),
 (15, 'Thilina', 'Samarasinghe', 'thilina.s@gmail.com',         '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'si', 'dark',  NULL),
-(16, 'Chamara', 'Herath',       'chamara.h@gmail.com',         '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    false, true,  'en', 'auto',  NULL),
+(16, 'Chamara', 'Herath',       'chamara.h@gmail.com',         '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true, true,  'en', 'auto',  NULL),
 (17, 'Asanka',  'Priyantha',    'asanka.p@gmail.com',          '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'si', 'light', NULL),
 (18, 'Nimal',   'Weerasinghe',  'nimal.w@gmail.com',           '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'en', 'dark',  NULL),
 (19, 'Isuru',   'Liyanage',     'isuru.l@gmail.com',           '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'si', 'light', NULL),
-(20, 'Ruwan',   'Karunaratne',  'ruwan.k@gmail.com',           '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    false, true,  'en', 'auto',  NULL),
+(20, 'Ruwan',   'Karunaratne',  'ruwan.k@gmail.com',           '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true, true,  'en', 'auto',  NULL),
 (21, 'Sanjeewa','Dharmasiri',   'sanjeewa.d@gmail.com',        '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'si', 'dark',  NULL),
 (22, 'Sachini', 'Amaratunga',   'admin@dialogaxiata.lk',       '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'corporate', true,  true,  'en', 'light', NULL),
 (23, 'Ruwan',   'Abeysekara',   'hr@johnkeellsgroup.lk',       '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'corporate', true,  true,  'si', 'auto',  NULL),
 (24, 'Thilini', 'Ratnayake',    'transport@hayleys.lk',        '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'corporate', true,  true,  'en', 'dark',  NULL),
-(25, 'Pradeep', 'Gunawardena',  'admin@virtusatech.lk',        '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'corporate', false, true,  'en', 'light', NULL),
+(25, 'Pradeep', 'Gunawardena',  'admin@virtusatech.lk',        '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'corporate', true, true,  'en', 'light', NULL),
 (26, 'Nalika',  'Jayasuriya',   'staff@sltelecom.lk',          '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'corporate', true,  true,  'si', 'light', NULL),
 (27, 'Dinesh',  'Gamage',       'dinesh.g@gmail.com',          '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'si', 'light', NULL),
 (28, 'Tharindu','Wijesekara',   'tharindu.w@gmail.com',        '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'en', 'dark',  NULL),
 (29, 'Kelum',   'Jayathilaka',  'kelum.j@gmail.com',           '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'si', 'auto',  NULL),
 (30, 'Buddhika','Senanayake',   'buddhika.s@gmail.com',        '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'en', 'light', NULL),
-(31, 'Harsha',  'Munasinghe',   'harsha.m@gmail.com',          '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    false, true,  'si', 'dark',  NULL),
+(31, 'Harsha',  'Munasinghe',   'harsha.m@gmail.com',          '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true, true,  'si', 'dark',  NULL),
 (32, 'Sampath', 'Rathnayake',   'sampath.r@gmail.com',         '$2a$10$E6A/9lJIRKfoTDKU0UpQ4.tbLDAoP8uu8kDeDPbrFrwXoMGk33HsK', 'driver',    true,  true,  'en', 'light', NULL);
 
 -- =============================================
@@ -63,6 +69,14 @@ INSERT INTO roles (id, name) VALUES
 (3, 'ROLE_DRIVER'),
 (4, 'ROLE_CORPORATE');
 
+-- Seed settings up front so every sample account has a complete profile.
+INSERT INTO user_settings (
+    user_id, language_code, share_location, push_notifications, sms_alerts,
+    email_updates, booking_updates
+)
+SELECT user_id, language_preference, TRUE, TRUE, FALSE, TRUE, TRUE
+FROM `user`;
+
 
 -- =============================================
 -- PASSENGERS (10 records)
@@ -72,13 +86,13 @@ INSERT INTO passenger (passenger_id, profile_photo, mobile_number, is_phone_veri
 (4,  NULL, '+94701111001', true,  'active'),
 (5,  NULL, '+94701111002', true,  'active'),
 (6,  NULL, '+94701111003', true,  'active'),
-(7,  NULL, '+94701111004', false, 'active'),
+(7,  NULL, '+94701111004', true, 'active'),
 (8,  NULL, '+94701111005', true,  'active'),
 (9,  NULL, '+94701111006', true,  'active'),
-(10, NULL, '+94701111007', false, 'active'),
+(10, NULL, '+94701111007', true, 'active'),
 (11, NULL, '+94701111008', true,  'active'),
 (12, NULL, '+94701111009', true,  'active'),
-(13, NULL, '+94701111010', false, 'suspended');
+(13, NULL, '+94701111010', true, 'active');
 
 
 -- =============================================
@@ -87,18 +101,18 @@ INSERT INTO passenger (passenger_id, profile_photo, mobile_number, is_phone_veri
 
 INSERT INTO driver (driver_id, licence_expiry, years_of_experience, profile_photo, account_number, phone_number, is_phone_verified, license_number, driver_earnings, status, is_verified, average_rating, joined_date) VALUES
 (14, '2027-06-30', 12, NULL, '7890123456', '0712221001', true,  'B1234567', 285000.00, 'active',    true,  4.80, '2015-03-10'),
-(15, '2026-09-15', 8,  NULL, '7890234567', '0712221002', true,  'B2345678', 198000.00, 'active',    true,  4.60, '2016-07-22'),
-(16, '2025-12-31', 5,  NULL, '7890345678', '0712221003', true,  'B3456789', 142000.00, 'active',    true,  4.40, '2019-11-05'),
-(17, '2028-03-20', 15, NULL, '7890456789', '0712221004', false, 'B4567890', 420000.00, 'active',    true,  4.90, '2009-05-18'),
-(18, '2026-07-10', 10, NULL, '7890567890', '0712221005', true,  'B5678901', 310000.00, 'active',    true,  4.70, '2014-08-30'),
-(19, '2027-11-25', 7,  NULL, '7890678901', '0712221006', true,  'B6789012', 175000.00, 'on_leave',  true,  4.30, '2017-02-14'),
-(20, '2025-05-08', 3,  NULL, '7890789012', '0712221007', false, 'B7890123',  45000.00, 'active',    false, 0.00, '2021-06-01'),
+(15, '2027-09-15', 8,  NULL, '7890234567', '0712221002', true,  'B2345678', 198000.00, 'active',    true,  4.60, '2016-07-22'),
+(16, '2028-12-31', 5,  NULL, '7890345678', '0712221003', true,  'B3456789', 142000.00, 'active',    true,  4.40, '2019-11-05'),
+(17, '2028-03-20', 15, NULL, '7890456789', '0712221004', true, 'B4567890', 420000.00, 'active',    true,  4.90, '2009-05-18'),
+(18, '2030-07-10', 10, NULL, '7890567890', '0712221005', true,  'B5678901', 310000.00, 'active',    true,  4.70, '2014-08-30'),
+(19, '2029-11-25', 7,  NULL, '7890678901', '0712221006', true,  'B6789012', 175000.00, 'active',  true,  4.30, '2017-02-14'),
+(20, '2031-05-08', 3,  NULL, '7890789012', '0712221007', true, 'B7890123',  45000.00, 'active',    true, 0.00, '2021-06-01'),
 (21, '2029-01-15', 20, NULL, '7890890123', '0712221008', true,  'B8901234', 680000.00, 'active',    true,  4.95, '2004-09-20'),
 (27, '2028-05-15', 6,  NULL, '7890901234', '0712221009', true,  'B9012345', 120000.00, 'active',    true,  4.20, '2018-04-12'),
 (28, '2027-09-20', 9,  NULL, '7891012345', '0712221010', true,  'B0123456',  95000.00, 'active',    true,  4.50, '2017-01-25'),
 (29, '2028-01-10', 4,  NULL, '7891123456', '0712221011', true,  'B1230001',  78000.00, 'active',    true,  4.10, '2020-08-18'),
 (30, '2027-11-30', 11, NULL, '7891234567', '0712221012', true,  'B1230002', 250000.00, 'active',    true,  4.65, '2013-06-05'),
-(31, '2026-08-05', 3,  NULL, '7891345678', '0712221013', false, 'B1230003',  42000.00, 'active',    true,  3.90, '2021-11-20'),
+(31, '2030-08-05', 3,  NULL, '7891345678', '0712221013', true, 'B1230003',  42000.00, 'active',    true,  3.90, '2021-11-20'),
 (32, '2028-04-18', 7,  NULL, '7891456789', '0712221014', true,  'B1230004', 165000.00, 'active',    true,  4.35, '2017-09-03');
 
 
@@ -110,7 +124,7 @@ INSERT INTO corporate_user (corporate_user_id, address, company_name, profile_ph
 (22, 'No. 57, Dharmapala Mawatha, Colombo 03',                'Dialog Axiata PLC',       NULL, 'Sachini Amaratunga',  '+94112456789', 'sachini.amaratunga@dialog.lk',  'HR Manager',           'active',               'PV00007062', 'Telecommunications'),
 (23, 'No. 117, Sir Chittampalam A. Gardiner Mawatha, Col 02', 'John Keells Holdings PLC',NULL, 'Ruwan Abeysekara',    '+94112331000', 'ruwan.abeysekara@johnkeells.lk', 'Admin Officer',        'active',               'PV00003521', 'Conglomerate'),
 (24, 'No. 400, Deans Road, Colombo 10',                       'Hayleys PLC',             NULL, 'Thilini Ratnayake',   '+94112627000', 'thilini.ratnayake@hayleys.lk',  'Transport Coordinator','active',               'PV00001503', 'Manufacturing'),
-(25, 'No. 1 Forum, Rajagiriya, Sri Jayawardenepura',          'Virtusa Corporation',     NULL, 'Pradeep Gunawardena', '+94112318088', 'pradeep.gunawardena@virtusa.lk','Facilities Manager',   'pending_verification', 'PV00045321', 'Information Technology & BPO'),
+(25, 'No. 1 Forum, Rajagiriya, Sri Jayawardenepura',          'Virtusa Corporation',     NULL, 'Pradeep Gunawardena', '+94112318088', 'pradeep.gunawardena@virtusa.lk','Facilities Manager',   'active',               'PV00045321', 'Information Technology & BPO'),
 (26, 'Lotus Road, Colombo 01',                                'Sri Lanka Telecom PLC',   NULL, 'Nalika Jayasuriya',   '+94112021000', 'nalika.jayasuriya@slt.lk',      'HR Director',         'active',               'PV00002841', 'Telecommunications');
 
 
@@ -278,8 +292,8 @@ INSERT INTO trip_booking (trip_booking_id, passenger_count, advance_payment, sta
 (2, 12, 6000.00,  'Kandy',     'Nuwara Eliya',   '2025-03-20', '2025-03-21', 15000.00,  'completed', 5, 15, 7),
 (3, 30, 15000.00, 'Colombo',   'Yala',           '2025-04-05', '2025-04-07', 45000.00,  'completed', 6, 16, 8),
 (4, 20, 10000.00, 'Colombo',   'Trincomalee',    '2025-05-10', '2025-05-12', 38000.00,  'completed', 8, 17, 7),
-(5, 15, 7500.00,  'Colombo',   'Arugam Bay',     '2025-06-20', NULL,         22000.00,  'completed', 9, 18, 8),
-(6, 10, 5000.00,  'Colombo',   'Pinnawala',      '2025-07-14', '2025-07-14', 12000.00,  'confirmed', 11, 14, 7),
+(5, 15, 7500.00,  'Colombo',   'Arugam Bay',     '2025-06-20', '2025-06-21', 22000.00,  'completed', 9, 18, 8),
+(6, 10, 5000.00,  'Colombo',   'Pinnawala',      '2025-07-14', '2025-07-14', 12000.00,  'completed', 11, 14, 7),
 (7, 35, 17500.00, 'Colombo',   'Anuradhapura',   '2025-08-01', '2025-08-02', 48000.00,  'pending',   7, NULL, NULL),
 (8, 18, 9000.00,  'Colombo',   'Mirissa',        '2025-09-05', '2025-09-06', 30000.00,  'cancelled', 12, 15, 8);
 
@@ -422,10 +436,16 @@ INSERT INTO notification (notification_id, notification_type, title, message, is
 -- =============================================
 
 INSERT INTO corporate_contract (contract_id, contract_name, starting_location, destination, start_shift_time, end_shift_time, status, billing_amount, start_date, end_date, corporate_user_id, bus_id) VALUES
-(1, 'Dialog Axiata Employee Transport - Colombo HQ',   'Nugegoda',      'Colombo 03',  '06:30:00', '19:00:00', 'active',   280000.00, '2025-01-01', '2025-12-31', 22, 9),
-(2, 'John Keells Employee Shuttle - Colombo',          'Maharagama',    'Colombo 02',  '07:00:00', '18:30:00', 'active',   260000.00, '2025-01-01', '2025-12-31', 23, 10),
-(3, 'Hayleys Employee Transport - Deans Road',         'Kaduwela',      'Colombo 10',  '06:00:00', '19:00:00', 'active',   245000.00, '2025-01-01', '2025-06-30', 24, NULL),
-(4, 'Virtusa Rajagiriya Staff Transport',              'Battaramulla',  'Rajagiriya',  '07:30:00', '20:00:00', 'pending',  190000.00, '2025-03-01', '2026-02-28', 25, NULL);
+(1, 'Dialog Axiata Employee Transport - Colombo HQ',   'Nugegoda',      'Colombo 03',  '06:30:00', '19:00:00', 'active',   280000.00, CURDATE() - INTERVAL 60 DAY, CURDATE() + INTERVAL 305 DAY, 22, 9),
+(2, 'John Keells Employee Shuttle - Colombo',          'Maharagama',    'Colombo 02',  '07:00:00', '18:30:00', 'active',   260000.00, CURDATE() - INTERVAL 30 DAY, CURDATE() + INTERVAL 335 DAY, 23, 10),
+(3, 'Hayleys Employee Transport - Deans Road',         'Kaduwela',      'Colombo 10',  '06:00:00', '19:00:00', 'active',   245000.00, CURDATE() - INTERVAL 15 DAY, CURDATE() + INTERVAL 180 DAY, 24, NULL),
+(4, 'Virtusa Rajagiriya Staff Transport',              'Battaramulla',  'Rajagiriya',  '07:30:00', '20:00:00', 'pending', 190000.00, CURDATE() + INTERVAL 30 DAY, CURDATE() + INTERVAL 395 DAY, 25, NULL);
+
+-- The current corporate module reads this join table when showing bus
+-- assignments. The legacy bus_id values above are retained for compatibility.
+INSERT INTO corporate_contract_bus (contract_id, bus_id) VALUES
+(1, 9),
+(2, 10);
 
 
 -- =============================================
@@ -433,16 +453,16 @@ INSERT INTO corporate_contract (contract_id, contract_name, starting_location, d
 -- =============================================
 
 INSERT INTO payment (payment_id, transaction_id, payment_method, payment_status, amount, trip_booking_id) VALUES
-(1, 'TXN-20250215-0001', 'payhere',       'success',  12500.00, 1),
-(2, 'TXN-20250215-0002', 'bank_transfer', 'success',  12500.00, 1),
-(3, 'TXN-20250320-0003', 'payhere',       'success',  15000.00, 2),
-(4, 'TXN-20250405-0004', 'credit_card',   'success',  45000.00, 3),
-(5, 'TXN-20250510-0005', 'payhere',       'success',  38000.00, 4),
-(6, 'TXN-20250620-0006', 'debit_card',    'success',  22000.00, 5),
-(7, 'TXN-20250714-0007', 'payhere',       'success',   5000.00, 6),
-(8, 'TXN-20250801-0008', 'cash',          'pending',      0.00, 7),
-(9, 'TXN-20250905-0009', 'payhere',       'refunded',  9000.00, 8),
-(10, 'TXN-20250115-0042', 'payhere',       'pending',   1800.00, NULL);
+(1, 'TXN-20250215-0001', 'stripe', 'success',  12500.00, 1),
+(2, 'TXN-20250215-0002', 'stripe', 'success',  12500.00, 1),
+(3, 'TXN-20250320-0003', 'stripe', 'success',  15000.00, 2),
+(4, 'TXN-20250405-0004', 'stripe', 'success',  45000.00, 3),
+(5, 'TXN-20250510-0005', 'stripe', 'success',  38000.00, 4),
+(6, 'TXN-20250620-0006', 'stripe', 'success',  22000.00, 5),
+(7, 'TXN-20250714-0007', 'stripe', 'success',   5000.00, 6),
+(8, 'TXN-20250801-0008', 'stripe', 'pending',      0.00, 7),
+(9, 'TXN-20250905-0009', 'stripe', 'refunded',  9000.00, 8),
+(10, 'TXN-20250115-0042', 'stripe', 'pending',  1800.00, NULL);
 
 
 -- =============================================
@@ -457,9 +477,9 @@ INSERT INTO seat_booking (seat_booking_id, booking_reference, journey_date, jour
 (5, 'SB-20250125-001', '2025-01-25', '06:00:00', 'B1',       NULL,                          450.00,  'completed', 9,  1, 1, 6,    'Colombo Fort', 'Peradeniya'),
 (6, 'SB-20250201-001', '2025-02-01', '05:00:00', 'A3,A4',    'AC seat required',           1100.00,  'completed', 11, 5, 5, 7,    'Colombo Fort', 'Matara'),
 (7, 'SB-20250210-001', '2025-02-10', '06:30:00', 'D2',       NULL,                          200.00,  'cancelled', 12, 6, 6, 9,    'Colombo Fort', 'Negombo'),
-(8, 'SB-20250301-001', '2025-03-01', '05:00:00', 'A1',       NULL,                         1800.00,  'confirmed', 7,  3, 3, 10,   'Colombo Fort', 'Jaffna'),
-(9, 'SB-20250315-001', '2025-03-15', '07:00:00', 'B2,B3',    'Elderly passenger, need AC',  700.00,  'confirmed', 10, 4, 4, NULL,  'Kandy', 'Nuwara Eliya'),
-(10, 'SB-20250401-001', '2025-04-01', '05:00:00', 'E5',       NULL,                         1800.00,  'confirmed', 4,  3, 3, NULL,  'Colombo Fort', 'Jaffna');
+(8, 'SB-20250301-001', '2025-03-01', '05:00:00', 'A1',       NULL,                         1800.00,  'completed', 7,  3, 3, 10,   'Colombo Fort', 'Jaffna'),
+(9, 'SB-20250315-001', '2025-03-15', '07:00:00', 'B2,B3',    'Elderly passenger, need AC',  700.00,  'completed', 10, 4, 4, NULL,  'Kandy', 'Nuwara Eliya'),
+(10, 'SB-20250401-001', '2025-04-01', '05:00:00', 'E5',       NULL,                         1800.00,  'completed', 4,  3, 3, NULL,  'Colombo Fort', 'Jaffna');
 
 INSERT INTO seat_booking_seat (seat_booking_id, bus_id, journey_date, seat_number) VALUES
 (1, 1, '2026-04-15', 'A1'),
@@ -497,10 +517,10 @@ INSERT INTO rating (rating_id, driver_rating, bus_condition_rating, journey_rati
 INSERT INTO corporate_invoices (contract_id, amount, status, period_start, period_end, due_date) VALUES
 (1, 280000.00, 'paid',    '2025-01-01', '2025-01-31', '2025-02-10'),
 (1, 280000.00, 'paid',    '2025-02-01', '2025-02-28', '2025-03-10'),
-(1, 280000.00, 'pending', '2025-03-01', '2025-03-31', '2025-04-10'),
+(1, 280000.00, 'paid', '2025-03-01', '2025-03-31', '2025-04-10'),
 (2, 260000.00, 'paid',    '2025-01-01', '2025-01-31', '2025-02-10'),
 (2, 260000.00, 'paid',    '2025-02-01', '2025-02-28', '2025-03-10'),
-(2, 260000.00, 'overdue', '2025-03-01', '2025-03-31', '2025-04-10'),
+(2, 260000.00, 'paid', '2025-03-01', '2025-03-31', '2025-04-10'),
 (3, 245000.00, 'paid',    '2025-01-01', '2025-01-31', '2025-02-10'),
 (3, 245000.00, 'paid',    '2025-02-01', '2025-02-28', '2025-03-10');
 
@@ -511,7 +531,7 @@ INSERT INTO corporate_invoices (contract_id, amount, status, period_start, perio
 
 INSERT INTO refund (refund_id, refund_reason, refund_status, processed_date, refund_amount, payment_id) VALUES
 (1, 'Passenger cancelled 3 days before journey date. Eligible for 80% refund as per policy.', 'processed', DATE_SUB(NOW(), INTERVAL 7 DAY), 7200.00, 9),
-(2, 'Bus breakdown on route. Full refund issued to all passengers.',                           'pending',   NULL,                             1800.00, 10);
+(2, 'Bus breakdown on route. Full refund issued to all passengers.',                           'processed', DATE_SUB(NOW(), INTERVAL 3 DAY), 1800.00, 10);
 
 
 -- =============================================
@@ -573,6 +593,106 @@ INSERT INTO ai_agent_interaction (chat_id, user_id, user_email, detected_intent,
 -- Keep this block last, after every INSERT, and extend it when new sample rows
 -- with timestamp columns are added.
 
+-- Keep fleet records valid for a demo imported in any year. Bus 10 remains in
+-- maintenance intentionally, so the admin dashboard still has that state to
+-- display and test.
+UPDATE bus
+SET insurance_exp_date = DATE_ADD(CURDATE(), INTERVAL 365 DAY);
+
+-- Historical and active charter bookings. IDs 1-5 demonstrate completed
+-- trips, ID 6 is a current confirmed trip, ID 7 is awaiting approval, and ID
+-- 8 remains a cancelled booking.
+UPDATE trip_booking
+SET
+    booking_status = CASE trip_booking_id
+        WHEN 1 THEN 'completed'
+        WHEN 2 THEN 'completed'
+        WHEN 3 THEN 'completed'
+        WHEN 4 THEN 'completed'
+        WHEN 5 THEN 'completed'
+        WHEN 6 THEN 'confirmed'
+        WHEN 7 THEN 'pending'
+        WHEN 8 THEN 'cancelled'
+    END,
+    start_date = CASE trip_booking_id
+        WHEN 1 THEN CURDATE() - INTERVAL 120 DAY
+        WHEN 2 THEN CURDATE() - INTERVAL 95 DAY
+        WHEN 3 THEN CURDATE() - INTERVAL 70 DAY
+        WHEN 4 THEN CURDATE() - INTERVAL 45 DAY
+        WHEN 5 THEN CURDATE() - INTERVAL 20 DAY
+        WHEN 6 THEN CURDATE() + INTERVAL 7 DAY
+        WHEN 7 THEN CURDATE() + INTERVAL 21 DAY
+        WHEN 8 THEN CURDATE() - INTERVAL 12 DAY
+    END,
+    return_date = CASE trip_booking_id
+        WHEN 1 THEN CURDATE() - INTERVAL 120 DAY
+        WHEN 2 THEN CURDATE() - INTERVAL 94 DAY
+        WHEN 3 THEN CURDATE() - INTERVAL 68 DAY
+        WHEN 4 THEN CURDATE() - INTERVAL 43 DAY
+        WHEN 5 THEN NULL
+        WHEN 6 THEN CURDATE() + INTERVAL 8 DAY
+        WHEN 7 THEN CURDATE() + INTERVAL 22 DAY
+        WHEN 8 THEN CURDATE() - INTERVAL 11 DAY
+    END;
+
+-- The reservation table is the current database-level guard against assigning
+-- the same trip bus twice on a date. It is required for the confirmed sample
+-- trip above.
+INSERT INTO trip_bus_reservation (trip_booking_id, bus_id, reserved_date) VALUES
+(6, 7, CURDATE() + INTERVAL 7 DAY),
+(6, 7, CURDATE() + INTERVAL 8 DAY);
+
+-- Keep three passenger bookings upcoming so the passenger and driver apps can
+-- show active journeys; the rest remain realistic historical/cancelled data.
+UPDATE seat_booking
+SET
+    status = CASE seat_booking_id
+        WHEN 1 THEN 'completed'
+        WHEN 2 THEN 'completed'
+        WHEN 3 THEN 'completed'
+        WHEN 4 THEN 'completed'
+        WHEN 5 THEN 'completed'
+        WHEN 6 THEN 'completed'
+        WHEN 7 THEN 'cancelled'
+        WHEN 8 THEN 'confirmed'
+        WHEN 9 THEN 'confirmed'
+        WHEN 10 THEN 'confirmed'
+    END,
+    journey_date = CASE seat_booking_id
+    WHEN 1 THEN CURDATE() - INTERVAL 60 DAY
+    WHEN 2 THEN CURDATE() - INTERVAL 55 DAY
+    WHEN 3 THEN CURDATE() - INTERVAL 48 DAY
+    WHEN 4 THEN CURDATE() - INTERVAL 40 DAY
+    WHEN 5 THEN CURDATE() - INTERVAL 30 DAY
+    WHEN 6 THEN CURDATE() - INTERVAL 21 DAY
+    WHEN 7 THEN CURDATE() - INTERVAL 14 DAY
+    WHEN 8 THEN CURDATE() + INTERVAL 3 DAY
+    WHEN 9 THEN CURDATE() + INTERVAL 5 DAY
+    WHEN 10 THEN CURDATE() + INTERVAL 7 DAY
+END;
+
+-- Keep normalised individual-seat rows aligned with their parent booking.
+UPDATE seat_booking_seat s
+INNER JOIN seat_booking sb ON sb.seat_booking_id = s.seat_booking_id
+SET s.journey_date = sb.journey_date;
+
+-- Keep active and pending corporate contracts visible in the corporate and
+-- admin dashboards rather than only showing expired 2025 records.
+UPDATE corporate_contract
+SET
+    start_date = CASE contract_id
+        WHEN 1 THEN CURDATE() - INTERVAL 60 DAY
+        WHEN 2 THEN CURDATE() - INTERVAL 30 DAY
+        WHEN 3 THEN CURDATE() - INTERVAL 15 DAY
+        WHEN 4 THEN CURDATE() + INTERVAL 30 DAY
+    END,
+    end_date = CASE contract_id
+        WHEN 1 THEN CURDATE() + INTERVAL 305 DAY
+        WHEN 2 THEN CURDATE() + INTERVAL 335 DAY
+        WHEN 3 THEN CURDATE() + INTERVAL 180 DAY
+        WHEN 4 THEN CURDATE() + INTERVAL 395 DAY
+    END;
+
 -- Seat bookings: reserved three days before travel, mid-morning.
 UPDATE seat_booking
 SET created_at = TIMESTAMP(journey_date - INTERVAL 3 DAY, '10:15:00');
@@ -615,6 +735,7 @@ UNION ALL SELECT 'roles',              COUNT(*) FROM roles
 UNION ALL SELECT 'passenger',          COUNT(*) FROM passenger
 UNION ALL SELECT 'driver',             COUNT(*) FROM driver
 UNION ALL SELECT 'corporate_user',     COUNT(*) FROM corporate_user
+UNION ALL SELECT 'user_settings',      COUNT(*) FROM user_settings
 UNION ALL SELECT 'route',              COUNT(*) FROM route
 UNION ALL SELECT 'route_stop',         COUNT(*) FROM route_stop
 UNION ALL SELECT 'bus',                COUNT(*) FROM bus
@@ -622,6 +743,7 @@ UNION ALL SELECT 'seat_layout',        COUNT(*) FROM seat_layout
 UNION ALL SELECT 'otp_verification',   COUNT(*) FROM otp_verification
 UNION ALL SELECT 'social_login',       COUNT(*) FROM social_login
 UNION ALL SELECT 'trip_booking',       COUNT(*) FROM trip_booking
+UNION ALL SELECT 'trip_bus_reservation', COUNT(*) FROM trip_bus_reservation
 UNION ALL SELECT 'conversation',       COUNT(*) FROM conversation
 UNION ALL SELECT 'chat_message',       COUNT(*) FROM chat_message
 UNION ALL SELECT 'complaint',          COUNT(*) FROM complaint
@@ -630,6 +752,7 @@ UNION ALL SELECT 'emergency_numbers',  COUNT(*) FROM emergency_numbers
 UNION ALL SELECT 'emergency_contact',  COUNT(*) FROM emergency_contact
 UNION ALL SELECT 'notification',       COUNT(*) FROM notification
 UNION ALL SELECT 'corporate_contract', COUNT(*) FROM corporate_contract
+UNION ALL SELECT 'corporate_contract_bus', COUNT(*) FROM corporate_contract_bus
 UNION ALL SELECT 'payment',            COUNT(*) FROM payment
 UNION ALL SELECT 'seat_booking',       COUNT(*) FROM seat_booking
 UNION ALL SELECT 'rating',             COUNT(*) FROM rating

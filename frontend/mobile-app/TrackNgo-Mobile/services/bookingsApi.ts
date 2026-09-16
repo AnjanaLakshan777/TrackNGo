@@ -81,6 +81,20 @@ export async function getPastBookings(userId: number): Promise<BookingHistoryDto
   return res.data ?? [];
 }
 
+/**
+ * Marks the passenger aboard. Every seat on the reference is flipped to
+ * "boarded", so the driver and admin see the passenger on the bus instead of the
+ * boarding state living only in the phone's memory.
+ */
+export async function markBoarded(bookingRef: string): Promise<void> {
+  const headers = await authHeaders();
+  await httpPut<ApiResponse<void>>(
+    `/api/booking-flow/bookings/${encodeURIComponent(bookingRef)}/boarded`,
+    undefined,
+    headers,
+  );
+}
+
 export async function cancelBooking(bookingRef: string): Promise<void> {
   const headers = await authHeaders();
   await httpPut<ApiResponse<void>>(

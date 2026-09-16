@@ -92,7 +92,7 @@ describe('Complaints page', () => {
     expect(screen.getByText('Complaint Description')).toBeInTheDocument()
     expect(screen.getByText('Bus door remained open.')).toBeInTheDocument()
     const evidenceLink = screen.getByLabelText('Open evidence image 1 in a new tab')
-    expect(evidenceLink).toHaveAttribute('href', 'http://localhost:8080/uploads/evidence-1.jpg')
+    expect(evidenceLink).toHaveAttribute('href', `${window.location.origin}/uploads/evidence-1.jpg`)
   })
 
   /** Verifies that saving a complaint triggers the update request and reloads the complaint data. */
@@ -131,7 +131,7 @@ describe('Complaints page', () => {
     expect(toEditableStatus('random')).toBe('Pending')
     expect(toApiStatus('Under Review')).toBe('under_review')
     expect(toApiStatus('Rejected')).toBe('rejected')
-    expect(resolveImageUrl('/uploads/photo.jpg')).toBe('http://localhost:8080/uploads/photo.jpg')
+    expect(resolveImageUrl('/uploads/photo.jpg')).toBe(`${window.location.origin}/uploads/photo.jpg`)
     expect(resolveImageUrl('https://cdn.example.com/photo.jpg')).toBe('https://cdn.example.com/photo.jpg')
     expect(formatCreatedDate(null)).toBe('--')
     expect(formatCreatedDate('not-a-date')).toBe('not-a-date')

@@ -16,9 +16,11 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    // Only matters for browser clients — the origin check is skipped
-    // entirely when no Origin header is present, which is how native mobile
-    // SockJS/XHR clients connect, so this doesn't affect the mobile app.
+    // Skipped when a request has no Origin header, which covers SockJS's XHR
+    // fallbacks from the mobile apps. Its WebSocket transport does carry one:
+    // React Native on Android sets Origin to the server's own https host, which
+    // passes only because server.forward-headers-strategy lets Tomcat see the
+    // https scheme the proxy received.
     @Value("${trackngo.cors.allowed-origins}")
     private String allowedOriginsProperty;
 

@@ -36,7 +36,7 @@ public class OtpEmailSender {
     @Async
     public void sendOtp(String toEmail, String otpCode, int expiryMinutes) {
         send(toEmail, "TrackNGo password reset code",
-                "Your TrackNGo admin password reset code is: " + otpCode + "\n\n"
+                "Your TrackNGo password reset code is: " + otpCode + "\n\n"
                         + "This code expires in " + expiryMinutes + " minutes. "
                         + "If you did not request this, you can safely ignore this email.",
                 "Password reset OTP", otpCode, expiryMinutes);

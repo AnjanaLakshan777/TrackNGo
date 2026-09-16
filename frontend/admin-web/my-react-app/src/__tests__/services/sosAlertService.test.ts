@@ -39,7 +39,7 @@ describe('sosAlertService', () => {
 
     const result = await fetchActiveSosAlerts()
 
-    expect(fetchMock).toHaveBeenCalledWith('http://127.0.0.1:8080/api/sos-alerts/active')
+    expect(fetchMock).toHaveBeenCalledWith('/api/sos-alerts/active')
     expect(result).toEqual([{ sosId: 88, status: 'triggered' }])
   })
 
@@ -60,7 +60,7 @@ describe('sosAlertService', () => {
 
     await updateSosAlertStatus(88, 'resolve')
 
-    expect(fetchMock).toHaveBeenCalledWith('http://127.0.0.1:8080/api/sos-alerts/88/resolve', {
+    expect(fetchMock).toHaveBeenCalledWith('/api/sos-alerts/88/resolve', {
       method: 'PUT',
     })
   })

@@ -105,6 +105,13 @@ public class AuthServiceImpl implements AuthService {
 
         if ((totpEnabled || emailOtpEnabled)
                 && !trustedDeviceService.isTrusted(user.getId(), request.getTrustedDeviceToken())) {
+            /* Without SMTP the code is only written to the log, so the challenge
+               below would strand the user on a code screen that nothing can ever
+               fill. Say so instead of pretending a code is on its way. */
+            if (emailOtpEnabled && !otpEmailSender.isConfigured()) {
+                throw new BusinessException(
+                        "We cannot send your login verification code right now. Please contact support.");
+            }
             String challengeToken = jwtUtil.generateToken(
                     user.getEmail(),
                     Map.of("purpose", "2fa", "userId", user.getId(), "role", actualUserType, "userType", actualUserType),
@@ -198,6 +205,10 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("Account no longer exists"));
+        if (!otpEmailSender.isConfigured()) {
+            throw new BusinessException(
+                    "We cannot send your login verification code right now. Please contact support.");
+        }
         sendLoginOtp(user);
     }
 

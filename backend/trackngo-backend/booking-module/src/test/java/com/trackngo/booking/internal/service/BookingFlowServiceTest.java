@@ -76,6 +76,10 @@ class BookingFlowServiceTest {
 
     // ─── searchBuses ──────────────────────────────────────────────────────────
 
+    /* searchBuses enforces the same booking window as the booking step, so these
+       cases need a date inside it rather than a fixed one that has since passed. */
+    private static final String FUTURE_JOURNEY_DATE = java.time.LocalDate.now().plusDays(7).toString();
+
     @Test
     @DisplayName("searchBuses: returns empty list when from equals to")
     void searchBuses_sameFromTo_returnsEmpty() {
@@ -123,7 +127,7 @@ class BookingFlowServiceTest {
         when(mapper.readValue(anyString(), any(com.fasterxml.jackson.core.type.TypeReference.class)))
                 .thenReturn(List.of("ac", "wifi"));
 
-        List<BusSearchResult> results = service.searchBuses("Colombo", "Kandy", "2025-05-01", null);
+        List<BusSearchResult> results = service.searchBuses("Colombo", "Kandy", FUTURE_JOURNEY_DATE, null);
 
         assertThat(results).hasSize(1);
         BusSearchResult r = results.get(0);
@@ -171,7 +175,7 @@ class BookingFlowServiceTest {
         when(mapper.readValue(anyString(), any(com.fasterxml.jackson.core.type.TypeReference.class)))
                 .thenReturn(List.of("ac"));
 
-        List<BusSearchResult> results = service.searchBuses("Kadawatha", "Mawanella", "2025-05-01", null);
+        List<BusSearchResult> results = service.searchBuses("Kadawatha", "Mawanella", FUTURE_JOURNEY_DATE, null);
 
         assertThat(results).hasSize(1);
         BusSearchResult result = results.get(0);
@@ -215,7 +219,7 @@ class BookingFlowServiceTest {
         when(mapper.readValue(anyString(), any(com.fasterxml.jackson.core.type.TypeReference.class)))
                 .thenReturn(List.of("ac"));
 
-        List<BusSearchResult> results = service.searchBuses("Kadawatha", "Mawanella", "2025-05-01", null);
+        List<BusSearchResult> results = service.searchBuses("Kadawatha", "Mawanella", FUTURE_JOURNEY_DATE, null);
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).routeName()).isEqualTo("Colombo to Kandy");
@@ -255,7 +259,7 @@ class BookingFlowServiceTest {
         when(mapper.readValue(anyString(), any(com.fasterxml.jackson.core.type.TypeReference.class)))
                 .thenReturn(List.of("wifi"));
 
-        List<BusSearchResult> results = service.searchBuses("Kadawatha", "Mawanella", "2025-05-01", null);
+        List<BusSearchResult> results = service.searchBuses("Kadawatha", "Mawanella", FUTURE_JOURNEY_DATE, null);
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).startTime()).isEqualTo("06:00");
@@ -268,7 +272,7 @@ class BookingFlowServiceTest {
         when(jdbc.queryForList(anyString(), any(Object[].class)))
                 .thenReturn(List.of());
 
-        List<BusSearchResult> results = service.searchBuses("Colombo", "Kandy", "2025-05-01", "highway");
+        List<BusSearchResult> results = service.searchBuses("Colombo", "Kandy", FUTURE_JOURNEY_DATE, "highway");
         assertThat(results).isEmpty();
 
         // Verify DB was called (not short-circuited)

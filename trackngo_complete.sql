@@ -954,6 +954,29 @@ CREATE TABLE password_reset_otp (
 );
 
 -- =============================================
+-- PASSENGER / CORPORATE SELF-REGISTRATION EMAIL OTP
+-- Backs auth-user-module's RegistrationOtp / RegistrationOtpServiceImpl.
+-- Keyed by email rather than user_id, since the account does not exist yet
+-- while the code is requested and verified. Mirrors
+-- database/migrations/V7__registration_otp.sql.
+-- =============================================
+
+CREATE TABLE registration_otp (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(254) NOT NULL,
+    otp_hash VARCHAR(255) NOT NULL,
+    verification_token VARCHAR(64) NULL,
+    expires_at TIMESTAMP NOT NULL,
+    verified_at TIMESTAMP NULL,
+    consumed BOOLEAN NOT NULL DEFAULT FALSE,
+    attempts INT NOT NULL DEFAULT 0,
+    last_sent_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_registration_otp_email (email, consumed),
+    INDEX idx_registration_otp_verification_token (verification_token)
+);
+
+-- =============================================
 -- USER PROFILE SETTINGS + TWO-FACTOR AUTHENTICATION
 -- Backs UserSettingsService / TwoFactorService. two_factor_secret and
 -- friends are used by the authenticator-app (TOTP) flow; trusted device
